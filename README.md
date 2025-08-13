@@ -1,4 +1,4 @@
-# 📚 Elevate Your Academic Publication Profile.
+# 📚 Elevate Your Academic Publication Profile
 
 A sophisticated web-based tool designed for faculty members and researchers to **manage**, **analyze**, and **showcase** their academic publication records. Featuring elegant visualizations and powerful summaries, this platform helps elevate your scholarly profile with ease and professionalism.
 
