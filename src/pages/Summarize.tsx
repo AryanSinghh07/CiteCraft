@@ -29,7 +29,10 @@ import {
   MAX_SUMMARY_FILE_BYTES,
   SUPPORTED_LABEL,
   readDocument,
+  readDocumentText,
 } from '@/features/summarizer/utils/readDocument';
+import { quickSummary } from '@/features/summarizer/utils/quickSummary';
+import { isSetupError } from '@/utils/errors';
 import type { DocumentRecord, SummaryFocus, SummaryLength, SummaryRecord } from '@/types';
 import {
   Check,
@@ -45,6 +48,7 @@ import {
   Trash2,
   UploadCloud,
   X,
+  Zap,
 } from 'lucide-react';
 
 const FOCUS_OPTIONS: { value: SummaryFocus; label: string }[] = [
@@ -65,9 +69,19 @@ const formatSize = (bytes: number) =>
 const errorMessage = (error: unknown) => (error instanceof Error ? error.message : 'Something went wrong.');
 
 type Status = 'idle' | 'reading' | 'streaming' | 'done' | 'error';
+type Engine = 'ai' | 'quick';
+
+const ENGINE_KEY = 'citecraft:summary-engine';
+const savedEngine = (): Engine => {
+  try {
+    return localStorage.getItem(ENGINE_KEY) === 'quick' ? 'quick' : 'ai';
+  } catch {
+    return 'ai';
+  }
+};
 
 const Summarize = () => {
-  const { mode, user } = useAuth();
+  const { user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -83,6 +97,17 @@ const Summarize = () => {
   const [copied, setCopied] = useState(false);
   const [dragging, setDragging] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<SummaryRecord | null>(null);
+  // AI when the server supports it; otherwise (or by choice) the free in-browser quick summary.
+  const [engine, setEngineState] = useState<Engine>(() => (aiService.available ? savedEngine() : 'quick'));
+  const [aiMissing, setAiMissing] = useState(!aiService.available);
+  const setEngine = (next: Engine) => {
+    setEngineState(next);
+    try {
+      localStorage.setItem(ENGINE_KEY, next);
+    } catch {
+      /* ignore */
+    }
+  };
   const abortRef = useRef<AbortController | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const outputRef = useRef<HTMLDivElement>(null);
@@ -125,6 +150,52 @@ const Summarize = () => {
 
   useEffect(() => () => abortRef.current?.abort(), []);
 
+  /** Quick summary: read the text in the browser, pick key sentences, reveal it progressively. */
+  const runQuick = async (target: File, signal: AbortSignal) => {
+    const text = await readDocumentText(target);
+    const { markdown } = quickSummary(text, { length, focus, fileName: target.name });
+    setStatus('streaming');
+    const pieces = markdown.split(/(?<=\n)/);
+    for (const piece of pieces) {
+      if (signal.aborted) throw new DOMException('Stopped', 'AbortError');
+      setOutput(prev => prev + piece);
+      await new Promise(resolve => setTimeout(resolve, 35));
+    }
+    if (user) {
+      try {
+        await aiService.saveSummary(user.id, {
+          fileName: target.name,
+          mimeType: target.type || 'application/octet-stream',
+          sizeBytes: target.size,
+          length,
+          focus,
+          summary: markdown,
+        });
+      } catch {
+        /* history table not set up — the summary is still shown */
+      }
+    }
+  };
+
+  const runAi = async (target: File, signal: AbortSignal) => {
+    const source = await readDocument(target);
+    setStatus('streaming');
+    const result = await aiService.summarize(
+      {
+        fileName: target.name,
+        mimeType: target.type || 'application/octet-stream',
+        sizeBytes: target.size,
+        source,
+        options: { length, focus, language },
+      },
+      chunk => setOutput(prev => prev + chunk),
+      signal,
+    );
+    if (result.truncated) {
+      toast({ title: 'Summary cut short', description: 'The summary hit its length limit. Try “Standard” length or a smaller file.' });
+    }
+  };
+
   const run = async () => {
     if (!file || busy) return;
     const controller = new AbortController();
@@ -132,26 +203,25 @@ const Summarize = () => {
     setOutput('');
     setOutputTitle(file.name);
     setStatus('reading');
+    outputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     try {
-      const source = await readDocument(file);
-      setStatus('streaming');
-      outputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      const result = await aiService.summarize(
-        {
-          fileName: file.name,
-          mimeType: file.type || 'application/octet-stream',
-          sizeBytes: file.size,
-          source,
-          options: { length, focus, language },
-        },
-        chunk => setOutput(prev => prev + chunk),
-        controller.signal,
-      );
+      if (engine === 'ai' && !aiMissing) {
+        try {
+          await runAi(file, controller.signal);
+        } catch (error) {
+          // The AI server isn't deployed / configured yet: fall back to the quick summary.
+          if ((error as Error).name === 'AbortError' || !(isSetupError(error) || /not configured/i.test(errorMessage(error)))) throw error;
+          setAiMissing(true);
+          setEngine('quick');
+          setOutput('');
+          toast({ title: 'AI summaries aren’t set up yet', description: 'Made a quick summary in your browser instead.' });
+          await runQuick(file, controller.signal);
+        }
+      } else {
+        await runQuick(file, controller.signal);
+      }
       setStatus('done');
       void refresh();
-      if (result.truncated) {
-        toast({ title: 'Summary cut short', description: 'The summary hit its length limit. Try “Standard” length or a smaller file.' });
-      }
     } catch (error) {
       if ((error as Error).name === 'AbortError') {
         setStatus('done');
@@ -210,22 +280,13 @@ const Summarize = () => {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-6xl">
           <header className="mb-8 animate-fade-up">
             <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary mb-3">
-              <Sparkles className="h-3.5 w-3.5" /> AI summarizer
+              <Sparkles className="h-3.5 w-3.5" /> Summarizer
             </div>
             <h1 className="text-3xl md:text-4xl font-bold">Summarize any document</h1>
             <p className="text-muted-foreground mt-1">
               Papers, theses, slides, spreadsheets, notes or scanned pages — get a clear summary in seconds.
             </p>
           </header>
-
-          {!aiService.available && (
-            <div className="mb-6 flex items-start gap-2 rounded-md border border-primary/20 bg-primary/5 p-3 text-sm">
-              <Info className="h-4 w-4 mt-0.5 text-primary shrink-0" />
-              <span>
-                The summarizer runs on the CiteCraft server and isn't available in <strong>{mode}</strong> mode.
-              </span>
-            </div>
-          )}
 
           <div className="grid gap-6 lg:grid-cols-5">
             {/* Input */}
@@ -320,8 +381,8 @@ const Summarize = () => {
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label>Language</Label>
-                    <Select value={language} onValueChange={setLanguage}>
+                    <Label>Language{engine === 'quick' && <span className="font-normal text-muted-foreground"> (AI only)</span>}</Label>
+                    <Select value={language} onValueChange={setLanguage} disabled={engine === 'quick'}>
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
@@ -336,6 +397,41 @@ const Summarize = () => {
                   </div>
                 </div>
 
+                <div className="space-y-2">
+                  <Label>Summary type</Label>
+                  <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Summary type">
+                    {(
+                      [
+                        { value: 'ai', label: 'AI summary', hint: aiMissing ? 'Not set up yet' : 'Best quality · any file', icon: Sparkles },
+                        { value: 'quick', label: 'Quick summary', hint: 'Free · in your browser', icon: Zap },
+                      ] as const
+                    ).map(option => (
+                      <button
+                        key={option.value}
+                        type="button"
+                        role="radio"
+                        aria-checked={engine === option.value}
+                        disabled={busy || (option.value === 'ai' && aiMissing)}
+                        onClick={() => setEngine(option.value)}
+                        className={cn(
+                          'flex flex-col items-start gap-0.5 rounded-lg border-2 p-2.5 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-50',
+                          engine === option.value ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/40',
+                        )}
+                      >
+                        <span className="flex items-center gap-1.5 text-sm font-medium">
+                          <option.icon className="h-4 w-4 text-primary" /> {option.label}
+                        </span>
+                        <span className="text-[11px] text-muted-foreground">{option.hint}</span>
+                      </button>
+                    ))}
+                  </div>
+                  {engine === 'quick' && (
+                    <p className="text-xs text-muted-foreground">
+                      Picks the most important sentences from the document. Works with PDF, Word, PowerPoint, Excel and text files (English works best).
+                    </p>
+                  )}
+                </div>
+
                 {busy ? (
                   <Button variant="outline" className="w-full" size="lg" onClick={() => abortRef.current?.abort()}>
                     <Square className="mr-2 h-4 w-4" /> Stop
@@ -345,9 +441,9 @@ const Summarize = () => {
                     className="w-full shadow-lg shadow-primary/20"
                     size="lg"
                     onClick={run}
-                    disabled={!file || !aiService.available}
+                    disabled={!file}
                   >
-                    <Sparkles className="mr-2 h-4 w-4" /> Summarize
+                    {engine === 'quick' ? <Zap className="mr-2 h-4 w-4" /> : <Sparkles className="mr-2 h-4 w-4" />} Summarize
                   </Button>
                 )}
               </CardContent>
@@ -421,7 +517,7 @@ const Summarize = () => {
           </div>
 
           {/* History */}
-          {aiService.available && (
+          {(
             <section className="mt-12">
               <h2 className="text-xl font-semibold flex items-center gap-2 mb-4">
                 <History className="h-5 w-5 text-primary" /> Recent summaries
