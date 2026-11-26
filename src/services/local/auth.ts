@@ -49,7 +49,7 @@ export const localAuth: AuthService = {
     return authUser;
   },
 
-  async signUp({ name, email, password }) {
+  async signUp({ name, email, password, accountType }) {
     await ensureDemoSeed();
     await simulateLatency(500);
     const normalized = normalizeEmail(email);
@@ -73,6 +73,7 @@ export const localAuth: AuthService = {
       affiliation: '',
       position: '',
       department: '',
+      accountType,
     });
     writeJson(keys.publications(user.id), []);
     writeJson(keys.session, user.id);
