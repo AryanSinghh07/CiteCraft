@@ -10,6 +10,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { profileService } from '@/services';
 import CiteMenu from '@/features/publications/components/CiteMenu';
+import { PUBLICATION_TYPES, venueOf } from '@/features/publications/utils/publicationTypes';
 import { researchMetrics } from '@/utils/metrics';
 import { safeUrl } from '@/utils/safeUrl';
 import AnimatedNumber from '@/components/common/AnimatedNumber';
@@ -18,7 +19,6 @@ import { ExternalLink, Globe, GraduationCap, Search, User as UserIcon } from 'lu
 const linkFor = (p: { doi?: string; url?: string }) =>
   p.doi ? `https://doi.org/${encodeURI(p.doi)}` : safeUrl(p.url);
 
-const TYPE_LABEL = { journal: 'Journal', conference: 'Conference', book: 'Book', chapter: 'Chapter', other: 'Other' };
 
 /** Shareable read-only profile page — works for visitors who are not signed in. */
 const PublicProfile = () => {
@@ -35,7 +35,7 @@ const PublicProfile = () => {
     const q = search.trim().toLowerCase();
     if (!q) return publications;
     return publications.filter(p =>
-      [p.title, p.journal, p.conference, p.book, ...p.authors, ...(p.tags ?? [])].some(v => v?.toLowerCase().includes(q)),
+      [p.title, venueOf(p), ...p.authors, ...(p.tags ?? [])].some(v => v?.toLowerCase().includes(q)),
     );
   }, [publications, search]);
   const years = useMemo(() => [...new Set(filtered.map(p => p.year))].sort((a, b) => b - a), [filtered]);
@@ -67,7 +67,7 @@ const PublicProfile = () => {
   ].filter((l): l is { href: string; label: string; icon: typeof Globe } => Boolean(l && l.href));
 
   const stats = [
-    { label: 'Publications', value: publications.length },
+    { label: profile.accountType === 'student' ? 'Works' : 'Publications', value: publications.length },
     { label: 'Citations', value: metrics.totalCitations },
     { label: 'h-index', value: metrics.hIndex },
     { label: 'i10-index', value: metrics.i10Index },
@@ -94,9 +94,20 @@ const PublicProfile = () => {
               )}
               <div className="space-y-2 flex-1 min-w-0">
                 <h1 className="text-3xl md:text-4xl font-bold">{profile.name}</h1>
+                {profile.accountType === 'student' && (
+                  <Badge variant="secondary" className="mb-1">Student</Badge>
+                )}
                 <p className="text-lg text-muted-foreground">
-                  {[profile.position, profile.department].filter(Boolean).join(', ')}
+                  {(profile.accountType === 'student'
+                    ? [profile.program, profile.yearOfStudy]
+                    : [profile.position, profile.department]
+                  )
+                    .filter(Boolean)
+                    .join(', ')}
                 </p>
+                {profile.accountType === 'student' && profile.supervisor && (
+                  <p className="text-sm text-muted-foreground">Supervisor: {profile.supervisor}</p>
+                )}
                 {profile.affiliation && <p className="text-muted-foreground">{profile.affiliation}</p>}
                 {links.length > 0 && (
                   <div className="flex flex-wrap gap-2 justify-center sm:justify-start pt-1">
@@ -142,7 +153,7 @@ const PublicProfile = () => {
 
         <section className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-5xl">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
-            <h2 className="text-2xl font-semibold">Publications</h2>
+            <h2 className="text-2xl font-semibold">{profile.accountType === 'student' ? 'Work' : 'Publications'}</h2>
             {publications.length > 5 && (
               <div className="relative sm:w-64">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -191,11 +202,11 @@ const PublicProfile = () => {
                               </p>
                               <p className="text-sm text-muted-foreground">{p.authors.join(', ')}</p>
                               <p className="text-sm text-muted-foreground italic">
-                                {p.journal || p.conference || p.book}
+                                {venueOf(p)}
                               </p>
                               <div className="flex flex-wrap items-center gap-2 pt-1">
                                 <Badge variant="outline" className="font-normal">
-                                  {TYPE_LABEL[p.type]}
+                                  {PUBLICATION_TYPES[p.type].short}
                                 </Badge>
                                 {(p.citations ?? 0) > 0 && (
                                   <span className="text-xs text-muted-foreground">
