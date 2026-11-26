@@ -33,6 +33,7 @@ export interface ProfileRow {
   program?: string | null;
   year_of_study?: string | null;
   supervisor?: string | null;
+  grade_scale?: number;
 }
 
 export interface PublicationRow {
@@ -89,6 +90,7 @@ export const profileFromRow = (r: ProfileRow): Profile => ({
   program: orUndefined(r.program ?? null),
   yearOfStudy: orUndefined(r.year_of_study ?? null),
   supervisor: orUndefined(r.supervisor ?? null),
+  gradeScale: r.grade_scale === 4 ? 4 : 10,
 });
 
 export const profileToRow = (p: Partial<Omit<Profile, 'id'>>): Partial<ProfileRow> => {
@@ -109,6 +111,7 @@ export const profileToRow = (p: Partial<Omit<Profile, 'id'>>): Partial<ProfileRo
   if (p.program !== undefined) row.program = emptyToNull(p.program);
   if (p.yearOfStudy !== undefined) row.year_of_study = emptyToNull(p.yearOfStudy);
   if (p.supervisor !== undefined) row.supervisor = emptyToNull(p.supervisor);
+  if (p.gradeScale !== undefined) row.grade_scale = p.gradeScale;
   if (p.publicSlug !== undefined) row.public_slug = emptyToNull(p.publicSlug)?.toLowerCase() ?? null;
   return row;
 };
