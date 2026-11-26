@@ -25,6 +25,8 @@ export interface ProfileRow {
   google_scholar: string | null;
   website: string | null;
   role?: UserRole;
+  is_public?: boolean;
+  public_slug?: string | null;
 }
 
 export interface PublicationRow {
@@ -74,6 +76,8 @@ export const profileFromRow = (r: ProfileRow): Profile => ({
   googleScholar: orUndefined(r.google_scholar),
   website: orUndefined(r.website),
   role: r.role ?? 'user',
+  isPublic: r.is_public ?? false,
+  publicSlug: orUndefined(r.public_slug ?? null),
 });
 
 export const profileToRow = (p: Partial<Omit<Profile, 'id'>>): Partial<ProfileRow> => {
@@ -89,6 +93,8 @@ export const profileToRow = (p: Partial<Omit<Profile, 'id'>>): Partial<ProfileRo
   if (p.orcid !== undefined) row.orcid = emptyToNull(p.orcid);
   if (p.googleScholar !== undefined) row.google_scholar = emptyToNull(p.googleScholar);
   if (p.website !== undefined) row.website = emptyToNull(p.website);
+  if (p.isPublic !== undefined) row.is_public = p.isPublic;
+  if (p.publicSlug !== undefined) row.public_slug = emptyToNull(p.publicSlug)?.toLowerCase() ?? null;
   return row;
 };
 
