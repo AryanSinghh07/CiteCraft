@@ -1,4 +1,16 @@
-import type { AuthUser, DocumentRecord, Profile, Publication, PublicationInput } from '@/types';
+import type {
+  AuthUser,
+  DocumentRecord,
+  Profile,
+  Publication,
+  PublicationInput,
+  StaffMember,
+  Ticket,
+  TicketAttachment,
+  TicketInput,
+  TicketMessage,
+  TicketUpdate,
+} from '@/types';
 
 /**
  * Contracts every backend implements. The app only talks to these interfaces,
@@ -49,12 +61,40 @@ export interface DocumentService {
   getFileUrl(userId: string, doc: DocumentRecord): Promise<string>;
 }
 
+/**
+ * Support tickets. Permission rules (requester vs admin) are enforced by the
+ * backend itself — the database in Supabase mode, the service in demo mode.
+ */
+export interface TicketService {
+  /** Tickets raised by this user. */
+  listMine(userId: string): Promise<Ticket[]>;
+  /** Every ticket (admins only). */
+  listAll(): Promise<Ticket[]>;
+  get(ticketId: string): Promise<Ticket | null>;
+  create(userId: string, input: TicketInput, files?: File[]): Promise<Ticket>;
+  update(ticketId: string, patch: TicketUpdate): Promise<Ticket>;
+  /** Internal notes are only returned to admins. */
+  listMessages(ticketId: string): Promise<TicketMessage[]>;
+  addMessage(
+    ticketId: string,
+    message: { body: string; isInternal?: boolean; files?: File[] },
+  ): Promise<TicketMessage>;
+  listAttachments(ticketId: string): Promise<TicketAttachment[]>;
+  getAttachmentUrl(attachment: TicketAttachment): Promise<string>;
+  /** Admins that tickets can be assigned to (admins only). */
+  listStaff(): Promise<StaffMember[]>;
+}
+
 export interface Backend {
   auth: AuthService;
   profiles: ProfileService;
   publications: PublicationService;
   documents: DocumentService;
+  tickets: TicketService;
 }
 
 export const MAX_DOCUMENT_BYTES = 10 * 1024 * 1024; // 10 MB
 export const MAX_AVATAR_BYTES = 2 * 1024 * 1024; // 2 MB
+export const MAX_TICKET_FILE_BYTES = 5 * 1024 * 1024; // 5 MB
+export const MAX_TICKET_FILES = 3;
+export const TICKET_FILE_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif', 'application/pdf', 'text/plain'];
