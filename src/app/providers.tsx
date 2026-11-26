@@ -5,10 +5,16 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { Toaster } from '@/components/ui/toaster';
 import { Toaster as Sonner } from '@/components/ui/sonner';
 import { AuthProvider } from '@/features/auth/context/AuthProvider';
+import { isSetupError } from '@/utils/errors';
 
 const queryClient = new QueryClient({
   defaultOptions: {
-    queries: { staleTime: 60_000, refetchOnWindowFocus: false, retry: 1 },
+    queries: {
+      staleTime: 60_000,
+      refetchOnWindowFocus: false,
+      // Retry network blips once, but not errors that won't fix themselves (missing tables etc.).
+      retry: (failureCount, error) => !isSetupError(error) && failureCount < 1,
+    },
   },
 });
 
