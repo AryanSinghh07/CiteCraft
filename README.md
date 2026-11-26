@@ -49,7 +49,7 @@ A sophisticated web-based tool designed for faculty members and researchers to *
 
 - [x] **Phase 1** — Real accounts (sign up, sign in, password reset), protected pages, saved publications, editable profile with photo upload, document library
 - [x] **Phase 1.5** — Support ticket system: raise queries, threaded replies, attachments, internal notes, admin panel with stats, ratings
-- [ ] **Phase 2** — DOI & BibTeX import, h-index / i10-index, export (PDF, CSV, citation styles), public profile page
+- [x] **Phase 2** — DOI lookup & bulk import (DOI / BibTeX), h-index & i10-index, export (CSV, BibTeX, APA / MLA / IEEE, printable PDF CV), shareable public profile at `/u/your-name`
 - [ ] **Phase 3** — UI refresh, dark mode, animations
 
 ---
