@@ -1,0 +1,136 @@
+/** The signed-in account (identity only). */
+export interface AuthUser {
+  id: string;
+  email: string;
+}
+
+/** Academic profile shown on the dashboard and profile page. */
+export interface Profile {
+  id: string;
+  name: string;
+  email: string;
+  affiliation: string;
+  position: string;
+  department: string;
+  photoUrl?: string;
+  bio?: string;
+  researchInterests?: string[];
+  orcid?: string;
+  googleScholar?: string;
+  website?: string;
+  role?: UserRole;
+}
+
+/** @deprecated use Profile */
+export type User = Profile;
+
+export type PublicationType = 'journal' | 'conference' | 'book' | 'chapter' | 'other';
+
+export interface Publication {
+  id: string;
+  title: string;
+  authors: string[];
+  journal?: string;
+  conference?: string;
+  book?: string;
+  year: number;
+  doi?: string;
+  url?: string;
+  abstract?: string;
+  citations?: number;
+  type: PublicationType;
+  tags?: string[];
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+/** Fields the user fills in; ids and timestamps are set by the data layer. */
+export type PublicationInput = Omit<Publication, 'id' | 'createdAt' | 'updatedAt'>;
+
+export interface DocumentRecord {
+  id: string;
+  name: string;
+  size: number;
+  mimeType: string;
+  publicationId?: string | null;
+  storagePath: string;
+  createdAt: string;
+}
+
+export interface PublicationSummary {
+  totalPublications: number;
+  journalArticles: number;
+  conferenceProceedings: number;
+  books: number;
+  bookChapters: number;
+  other: number;
+  citationCount: number;
+  publicationsByYear: Record<string, number>;
+  topJournals: Record<string, number>;
+  topConferences: Record<string, number>;
+  coAuthors: Record<string, number>;
+}
+
+// ------------------------------------------------------------------ support tickets
+
+export type UserRole = 'user' | 'admin';
+export type TicketStatus = 'open' | 'in_progress' | 'waiting_on_user' | 'resolved' | 'closed';
+export type TicketPriority = 'low' | 'medium' | 'high';
+export type TicketCategory = 'bug' | 'account' | 'publication' | 'feature' | 'other';
+
+export interface Ticket {
+  id: string;
+  ticketNumber: number;
+  userId: string;
+  requesterName: string;
+  requesterEmail: string;
+  subject: string;
+  description: string;
+  category: TicketCategory;
+  priority: TicketPriority;
+  status: TicketStatus;
+  assignedTo: string | null;
+  rating: number | null;
+  createdAt: string;
+  updatedAt: string;
+  resolvedAt: string | null;
+  closedAt: string | null;
+}
+
+export interface TicketInput {
+  subject: string;
+  description: string;
+  category: TicketCategory;
+  priority: TicketPriority;
+}
+
+/** Fields support staff can change; requesters may only set status (close/reopen) and rating. */
+export type TicketUpdate = Partial<Pick<Ticket, 'status' | 'priority' | 'category' | 'assignedTo' | 'rating'>>;
+
+export interface TicketMessage {
+  id: string;
+  ticketId: string;
+  authorId: string;
+  authorName: string;
+  authorRole: UserRole;
+  body: string;
+  isInternal: boolean;
+  createdAt: string;
+}
+
+export interface TicketAttachment {
+  id: string;
+  ticketId: string;
+  messageId: string | null;
+  name: string;
+  size: number;
+  mimeType: string;
+  storagePath: string;
+  createdAt: string;
+}
+
+export interface StaffMember {
+  id: string;
+  name: string;
+  email: string;
+}
