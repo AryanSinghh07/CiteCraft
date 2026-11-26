@@ -93,6 +93,7 @@ const Summarize = () => {
   const [language, setLanguage] = useState('English');
   const [status, setStatus] = useState<Status>('idle');
   const [output, setOutput] = useState('');
+  const [stage, setStage] = useState('');
   const [outputTitle, setOutputTitle] = useState('');
   const [copied, setCopied] = useState(false);
   const [dragging, setDragging] = useState(false);
@@ -169,14 +170,32 @@ const Summarize = () => {
 
   /** Quick summary: read the text in the browser, pick key sentences, reveal it progressively. */
   const runQuick = async (target: File, signal: AbortSignal) => {
-    const text = await readDocumentText(target);
+    const wait = (ms: number) =>
+      new Promise<void>((resolve, reject) => {
+        if (signal.aborted) return reject(new DOMException('Stopped', 'AbortError'));
+        const timer = setTimeout(resolve, ms);
+        signal.addEventListener('abort', () => {
+          clearTimeout(timer);
+          reject(new DOMException('Stopped', 'AbortError'));
+        }, { once: true });
+      });
+    // Short, honest stages so the result doesn't flash in all at once.
+    setStage('Reading your document…');
+    const [text] = await Promise.all([readDocumentText(target), wait(700)]);
+    setStage('Finding the key points…');
+    await wait(600);
     const { markdown } = quickSummary(text, { length, focus, fileName: target.name });
+    setStage('Writing your summary…');
+    await wait(450);
     setStatus('streaming');
-    const pieces = markdown.split(/(?<=\n)/);
-    for (const piece of pieces) {
-      if (signal.aborted) throw new DOMException('Stopped', 'AbortError');
-      setOutput(prev => prev + piece);
-      await new Promise(resolve => setTimeout(resolve, 35));
+    // Reveal a few words at a time, taking about 1.5–3.5 s in total.
+    const tokens = markdown.split(/(\s+)/);
+    const steps = Math.min(140, Math.max(40, Math.ceil(tokens.length / 2)));
+    const perStep = Math.ceil(tokens.length / steps);
+    const delay = Math.round(Math.min(3500, Math.max(1500, tokens.length * 6)) / steps);
+    for (let i = 0; i < tokens.length; i += perStep) {
+      setOutput(prev => prev + tokens.slice(i, i + perStep).join(''));
+      await wait(delay);
     }
     if (user) {
       try {
@@ -221,6 +240,7 @@ const Summarize = () => {
     const controller = new AbortController();
     abortRef.current = controller;
     setOutput('');
+    setStage('');
     setOutputTitle(file.name);
     setStatus('reading');
     outputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -518,8 +538,20 @@ const Summarize = () => {
                     <div className="space-y-4">
                       <p className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Loader2 className="h-4 w-4 animate-spin" />
-                        {status === 'reading' ? 'Reading your file…' : 'Reading the document and writing the summary…'}
+                        <span key={stage} className="animate-fade-in">
+                          {stage || (status === 'reading' ? 'Reading your file…' : 'Reading the document and writing the summary…')}
+                        </span>
                       </p>
+                      {stage && (
+                        <div className="h-1 w-full overflow-hidden rounded-full bg-muted" aria-hidden>
+                          <div
+                            className="h-full rounded-full bg-primary transition-all duration-700 ease-out"
+                            style={{
+                              width: /^Reading/.test(stage) ? '30%' : /^Finding/.test(stage) ? '65%' : '90%',
+                            }}
+                          />
+                        </div>
+                      )}
                       <Skeleton className="h-5 w-1/3" />
                       <Skeleton className="h-4 w-full" />
                       <Skeleton className="h-4 w-11/12" />
