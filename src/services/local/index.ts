@@ -5,6 +5,7 @@ import { localProfiles } from './profiles';
 import { localPublications } from './publications';
 import { localTickets } from './tickets';
 import { localAi } from './ai';
+import { localReadingList } from './readingList';
 
 /** Demo-mode backend: everything is stored in this browser. */
 export const localBackend: Backend = {
@@ -14,4 +15,5 @@ export const localBackend: Backend = {
   documents: localDocuments,
   tickets: localTickets,
   ai: localAi,
+  readingList: localReadingList,
 };
