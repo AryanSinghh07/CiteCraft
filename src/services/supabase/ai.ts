@@ -1,6 +1,6 @@
 import { env } from '@/config/env';
 import { requireSupabase } from '@/lib/supabase';
-import type { AssistantReply, SummaryRecord } from '@/types';
+import type { SummaryRecord } from '@/types';
 import type { AiService } from '../types';
 
 interface SummaryRow {
@@ -52,21 +52,6 @@ const functionUrl = (name: string) => `${env.supabaseUrl.replace(/\/$/, '')}/fun
 
 export const supabaseAi: AiService = {
   available: true,
-
-  async chat(messages) {
-    let response: Response;
-    try {
-      response = await fetch(functionUrl('assistant'), {
-        method: 'POST',
-        headers: await authHeaders(),
-        body: JSON.stringify({ messages }),
-      });
-    } catch {
-      throw new Error('Could not reach the assistant. Check your connection.');
-    }
-    if (!response.ok) throw new Error(await functionError(response));
-    return (await response.json()) as AssistantReply;
-  },
 
   async summarize(request, onText, signal) {
     let response: Response;
