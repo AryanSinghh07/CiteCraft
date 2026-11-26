@@ -9,6 +9,7 @@ import {
   BookOpen, ExternalLink, Users, Calendar, Award, Hash, ChevronDown, ChevronUp, Edit, Trash
 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import CiteMenu from './CiteMenu';
 
 interface PublicationCardProps {
   publication: Publication;
@@ -141,6 +142,8 @@ const PublicationCard = ({ publication, onEdit, onDelete }: PublicationCardProps
             </Button>
           )}
           
+          <CiteMenu publication={publication} />
+
           {(publication.doi || publication.url) && (
             <Button 
               variant="ghost" 
