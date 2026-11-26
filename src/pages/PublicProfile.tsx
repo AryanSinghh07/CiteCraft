@@ -12,6 +12,7 @@ import { profileService } from '@/services';
 import CiteMenu from '@/features/publications/components/CiteMenu';
 import { researchMetrics } from '@/utils/metrics';
 import { safeUrl } from '@/utils/safeUrl';
+import AnimatedNumber from '@/components/common/AnimatedNumber';
 import { ExternalLink, Globe, GraduationCap, Search, User as UserIcon } from 'lucide-react';
 
 const linkFor = (p: { doi?: string; url?: string }) =>
@@ -67,7 +68,7 @@ const PublicProfile = () => {
 
   const stats = [
     { label: 'Publications', value: publications.length },
-    { label: 'Citations', value: metrics.totalCitations.toLocaleString() },
+    { label: 'Citations', value: metrics.totalCitations },
     { label: 'h-index', value: metrics.hIndex },
     { label: 'i10-index', value: metrics.i10Index },
   ];
@@ -129,7 +130,9 @@ const PublicProfile = () => {
                 <Card key={stat.label} className="glass-card animate-fade-in" style={{ animationDelay: `${i * 60}ms` }}>
                   <CardContent className="p-4">
                     <p className="text-xs text-muted-foreground">{stat.label}</p>
-                    <p className="text-2xl font-bold">{stat.value}</p>
+                    <p className="text-2xl font-bold">
+                      <AnimatedNumber value={stat.value} />
+                    </p>
                   </CardContent>
                 </Card>
               ))}
