@@ -115,6 +115,11 @@ Calculations live in `features/student/utils.ts`; data goes through one generic
 
 ## Security
 
+- **Account deletion** (`/security` → Delete account): the app deletes the user's stored files
+  through the Storage API, then calls `delete_my_account()` (`0009`), which deletes the auth user —
+  every table cascades from it. 2FA users must be in an `aal2` session.
+- **Privacy policy** (`/privacy`) describes exactly these flows; keep it in sync when data handling changes.
+
 - **Security page** (`/security`): a security level (Low / Medium / High) from email verified +
   strong password + 2FA; authenticator-app 2FA (Supabase MFA, QR code set-up); password change with a
   strength meter; sign out other devices; download all my data (JSON).
@@ -127,7 +132,15 @@ Calculations live in `features/student/utils.ts`; data goes through one generic
 - **Headers** (`netlify.toml`): strict Content-Security-Policy (no inline scripts — the theme
   script lives in `public/theme-init.js`), `X-Frame-Options: DENY`, `nosniff`, HSTS and more.
 
-## AI summarizer
+## Summarizer
+
+- **Quick summary** (`features/summarizer/utils/quickSummary.ts`): extractive, in the browser —
+  sentences are scored by key-word frequency, position and the chosen focus, de-duplicated and
+  kept in their original order. PDFs are read with PDF.js (`readDocumentText`), loaded only when needed.
+- **AI summary**: the edge function below. If it isn't deployed or configured, `Summarize` falls
+  back to the quick summary automatically.
+
+### AI summary
 
 ```
  Browser                         Supabase Edge Function (Deno)              Anthropic
@@ -159,6 +172,7 @@ Calculations live in `features/student/utils.ts`; data goes through one generic
 | `/login`, `/signup` | signed-out only |
 | `/forgot-password`, `/reset-password` | public |
 | `/cite` | public — free citation generator |
+| `/privacy` | public — privacy policy |
 | `/u/:slug` | public — opt-in profile page (read through `get_public_profile()`, never exposes email) |
 | `/dashboard`, `/profile`, `/summary`, `/cv`, `/summarize`, `/reading-list`, `/college`, `/security` | signed-in only (`ProtectedRoute`) |
 | `/support`, `/support/:ticketId` | signed-in only — raise and follow tickets |
