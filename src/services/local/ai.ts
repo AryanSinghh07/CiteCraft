@@ -1,9 +1,12 @@
+import type { SummaryRecord } from '@/types';
 import type { AiService } from '../types';
+import { readJson, writeJson } from './storage';
 
 const UNAVAILABLE =
-  'The AI summarizer runs on the CiteCraft server, so it is not available in demo mode. Connect Supabase (see docs/SETUP.md) to use it.';
+  'The AI summarizer runs on the CiteCraft server, so it is not available in demo mode. Use the quick summary instead.';
+const key = (userId: string) => `citecraft:summaries:${userId}`;
 
-/** Demo mode has no server, so the summarizer explains how to enable it. */
+/** Demo mode: no AI server, but quick (in-browser) summaries are kept in this browser's history. */
 export const localAi: AiService = {
   available: false,
 
@@ -11,11 +14,17 @@ export const localAi: AiService = {
     throw new Error(UNAVAILABLE);
   },
 
-  async listSummaries() {
-    return [];
+  async listSummaries(userId) {
+    return readJson<SummaryRecord[]>(key(userId), []);
   },
 
-  async deleteSummary() {
-    /* nothing stored in demo mode */
+  async saveSummary(userId, r) {
+    const record: SummaryRecord = { ...r, id: crypto.randomUUID(), createdAt: new Date().toISOString() };
+    writeJson(key(userId), [record, ...readJson<SummaryRecord[]>(key(userId), [])].slice(0, 50));
+    return record;
+  },
+
+  async deleteSummary(userId, id) {
+    writeJson(key(userId), readJson<SummaryRecord[]>(key(userId), []).filter(s => s.id !== id));
   },
 };
