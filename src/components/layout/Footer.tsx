@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
-import { Book, Github, Linkedin } from 'lucide-react';
+import { Github, Linkedin } from 'lucide-react';
+import Logo from '@/components/common/Logo';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 
 const Footer = () => {
@@ -23,6 +24,7 @@ const Footer = () => {
   const help = [
     { to: user ? '/support' : '/login', label: 'Help & support' },
     { to: '/forgot-password', label: 'Reset password' },
+    { to: '/privacy', label: 'Privacy policy' },
   ];
 
   return (
@@ -31,9 +33,7 @@ const Footer = () => {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           <div className="col-span-2 space-y-4">
             <Link to="/" className="inline-flex items-center gap-2 text-xl font-semibold">
-              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                <Book className="h-4 w-4" />
-              </span>
+              <Logo size={32} />
               CiteCraft
             </Link>
             <p className="text-sm text-muted-foreground max-w-xs">
@@ -90,7 +90,9 @@ const Footer = () => {
 
         <div className="mt-10 pt-6 border-t border-border/60 flex flex-col sm:flex-row justify-between gap-2 text-sm text-muted-foreground">
           <p>&copy; {new Date().getFullYear()} CiteCraft. All rights reserved.</p>
-          <p>Made for researchers, by researchers.</p>
+          <Link to="/privacy" className="hover:text-primary transition-colors">
+            Privacy policy
+          </Link>
         </div>
       </div>
     </footer>
