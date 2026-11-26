@@ -17,6 +17,8 @@ export const {
   tickets: ticketService,
   ai: aiService,
   readingList: readingListService,
+  student: studentService,
+  security: securityService,
 } = backend;
 
 export { backendMode };
