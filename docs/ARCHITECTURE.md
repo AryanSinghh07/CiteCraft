@@ -53,6 +53,8 @@ CiteCraft/
 │   │   ├── profile/           useUpdateProfile
 │   │   ├── publications/      list, card, form, insights, work types + usePublications
 │   │   ├── readingList/       reading list hook + helpers
+│   │   ├── security/          password strength, security level, strength meter
+│   │   ├── student/           college tools: timetable, tasks, attendance, CGPA, focus timer, hub
 │   │   ├── summarizer/        file reader (PDF, Office, text…) + useSummaries
 │   │   └── support/           ticket list, thread, reply box, admin controls, stats + useTickets
 │   ├── hooks/                 Generic hooks (toast, mobile)
@@ -95,6 +97,36 @@ server, no AI, no cost, and it works in demo mode too.
 - `/cite` — a public citation generator (APA, MLA, IEEE, Harvard, Chicago); recent citations
   are kept in the visitor's browser only.
 
+## College tools (students)
+
+`/college` has five tabs, and a student's dashboard shows a daily **Student hub** (today's classes,
+upcoming deadlines, attendance alerts, CGPA and a focus timer).
+
+| Tab | Table | Notes |
+|---|---|---|
+| Timetable | `class_sessions` (+ `courses`) | weekly slots; overlap warning; NOW / NEXT |
+| Assignments & exams | `student_tasks` | grouped Overdue / Today / 7 days / Later / Done |
+| Attendance | `courses.attended / total / required_pct` | "you can miss N" / "attend the next N" |
+| CGPA | `grade_entries`, `profiles.grade_scale` | SGPA, CGPA, % (×9.5), target planner |
+| Focus timer | browser only | Pomodoro; sessions counted per day |
+
+Calculations live in `features/student/utils.ts`; data goes through one generic
+`CollectionService` per table (`services/*/student.ts`).
+
+## Security
+
+- **Security page** (`/security`): a security level (Low / Medium / High) from email verified +
+  strong password + 2FA; authenticator-app 2FA (Supabase MFA, QR code set-up); password change with a
+  strength meter; sign out other devices; download all my data (JSON).
+- **2FA sign-in**: `AuthProvider` only treats a session as signed in once any required 2FA code is
+  verified (`pendingMfa` → `MfaChallenge`).
+- **Database enforcement** (`0008_security.sql`): a restrictive policy on every user table and on
+  storage requires an `aal2` session for users with a verified factor.
+- **Passwords**: `features/security/passwordStrength.ts` rejects short, common and name-based
+  passwords at sign-up, reset and change.
+- **Headers** (`netlify.toml`): strict Content-Security-Policy (no inline scripts — the theme
+  script lives in `public/theme-init.js`), `X-Frame-Options: DENY`, `nosniff`, HSTS and more.
+
 ## AI summarizer
 
 ```
@@ -128,7 +160,7 @@ server, no AI, no cost, and it works in demo mode too.
 | `/forgot-password`, `/reset-password` | public |
 | `/cite` | public — free citation generator |
 | `/u/:slug` | public — opt-in profile page (read through `get_public_profile()`, never exposes email) |
-| `/dashboard`, `/profile`, `/summary`, `/cv`, `/summarize`, `/reading-list` | signed-in only (`ProtectedRoute`) |
+| `/dashboard`, `/profile`, `/summary`, `/cv`, `/summarize`, `/reading-list`, `/college`, `/security` | signed-in only (`ProtectedRoute`) |
 | `/support`, `/support/:ticketId` | signed-in only — raise and follow tickets |
 | `/admin/tickets` | admins only (`AdminRoute`) |
 
