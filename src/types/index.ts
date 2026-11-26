@@ -143,3 +143,46 @@ export interface StaffMember {
   name: string;
   email: string;
 }
+
+// ------------------------------------------------------------------ AI features
+
+export interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+/** Something the assistant did on the user's behalf. */
+export type AssistantAction =
+  | { type: 'publication_added'; id: string; title: string }
+  | { type: 'ticket_created'; id: string; ticketNumber: number; subject: string };
+
+export interface AssistantReply {
+  reply: string;
+  actions: AssistantAction[];
+}
+
+export type SummaryLength = 'brief' | 'standard' | 'detailed';
+export type SummaryFocus = 'general' | 'key_findings' | 'methods' | 'literature' | 'action_items' | 'simple' | 'slides';
+
+export interface SummaryOptions {
+  length: SummaryLength;
+  focus: SummaryFocus;
+  language: string;
+}
+
+/** What the browser sends to the summarizer after reading the file. */
+export type SummarySource =
+  | { kind: 'pdf'; data: string; mediaType: 'application/pdf' }
+  | { kind: 'image'; data: string; mediaType: string }
+  | { kind: 'text'; text: string };
+
+export interface SummaryRecord {
+  id: string;
+  fileName: string;
+  mimeType: string;
+  sizeBytes: number;
+  length: SummaryLength;
+  focus: SummaryFocus;
+  summary: string;
+  createdAt: string;
+}
