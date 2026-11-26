@@ -107,6 +107,18 @@ export function useTicket(ticketId: string) {
     if (url.startsWith('blob:')) setTimeout(() => URL.revokeObjectURL(url), 60_000);
   };
 
+  /** The attachment itself, for the in-app viewer. */
+  const loadAttachment = async (attachment: TicketAttachment): Promise<Blob> => {
+    const url = await ticketService.getAttachmentUrl(attachment);
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('This file could not be downloaded. Try again in a moment.');
+      return await res.blob();
+    } finally {
+      if (url.startsWith('blob:')) URL.revokeObjectURL(url);
+    }
+  };
+
   return {
     ticket: ticket.data ?? null,
     messages: messages.data ?? [],
@@ -116,5 +128,6 @@ export function useTicket(ticketId: string) {
     reply,
     update,
     openAttachment,
+    loadAttachment,
   };
 }
