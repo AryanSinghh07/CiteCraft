@@ -5,20 +5,21 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Publication } from '@/utils/types';
-import { v4 as uuidv4 } from 'uuid';
-import { XIcon, PlusIcon } from 'lucide-react';
+import type { Publication, PublicationType } from '@/types';
+import { XIcon, PlusIcon, Loader2 } from 'lucide-react';
 
 interface PublicationFormProps {
   initialData?: Publication;
-  onSubmit: (publication: Publication) => void;
+  /** For new publications `id` is an empty string; the data layer assigns the real id. */
+  onSubmit: (publication: Publication) => void | Promise<void>;
   onCancel: () => void;
+  isSubmitting?: boolean;
 }
 
-const PublicationForm = ({ initialData, onSubmit, onCancel }: PublicationFormProps) => {
+const PublicationForm = ({ initialData, onSubmit, onCancel, isSubmitting = false }: PublicationFormProps) => {
   const [publication, setPublication] = useState<Publication>(
     initialData || {
-      id: uuidv4(),
+      id: '',
       title: '',
       authors: [''],
       year: new Date().getFullYear(),
@@ -39,7 +40,7 @@ const PublicationForm = ({ initialData, onSubmit, onCancel }: PublicationFormPro
   const handleTypeChange = (value: string) => {
     setPublication(prev => ({
       ...prev,
-      type: value as 'journal' | 'conference' | 'book' | 'chapter' | 'other'
+      type: value as PublicationType
     }));
   };
 
@@ -55,12 +56,10 @@ const PublicationForm = ({ initialData, onSubmit, onCancel }: PublicationFormPro
 
   const handleCitationsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(e.target.value);
-    if (!isNaN(value)) {
-      setPublication(prev => ({
-        ...prev,
-        citations: value
-      }));
-    }
+    setPublication(prev => ({
+      ...prev,
+      citations: isNaN(value) ? 0 : Math.max(0, value)
+    }));
   };
 
   const handleAuthorChange = (index: number, value: string) => {
@@ -88,6 +87,13 @@ const PublicationForm = ({ initialData, onSubmit, onCancel }: PublicationFormPro
     }
   };
 
+  const handleTagKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      addTag();
+    }
+  };
+
   const addTag = () => {
     if (tag.trim() && !publication.tags?.includes(tag.trim())) {
       setPublication(prev => ({
@@ -107,7 +113,11 @@ const PublicationForm = ({ initialData, onSubmit, onCancel }: PublicationFormPro
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(publication);
+    void onSubmit({
+      ...publication,
+      title: publication.title.trim(),
+      authors: publication.authors.map(a => a.trim()).filter(Boolean),
+    });
   };
 
   return (
@@ -271,7 +281,8 @@ const PublicationForm = ({ initialData, onSubmit, onCancel }: PublicationFormPro
             id="tags"
             value={tag}
             onChange={(e) => setTag(e.target.value)}
-            placeholder="Add a tag"
+            onKeyDown={handleTagKeyDown}
+            placeholder="Add a tag and press Enter"
           />
           <Button
             type="button"
@@ -301,10 +312,11 @@ const PublicationForm = ({ initialData, onSubmit, onCancel }: PublicationFormPro
       </div>
 
       <div className="flex justify-end gap-2 pt-4">
-        <Button type="button" variant="outline" onClick={onCancel}>
+        <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
           Cancel
         </Button>
-        <Button type="submit">
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           {initialData ? 'Update Publication' : 'Add Publication'}
         </Button>
       </div>
