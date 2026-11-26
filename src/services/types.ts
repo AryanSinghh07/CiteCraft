@@ -1,5 +1,13 @@
 import type {
   AccountType,
+  ClassSession,
+  ClassSessionInput,
+  Course,
+  CourseInput,
+  GradeEntry,
+  GradeEntryInput,
+  StudentTask,
+  StudentTaskInput,
   AuthUser,
   DocumentRecord,
   Profile,
@@ -117,6 +125,47 @@ export interface ReadingListService {
   remove(userId: string, id: string): Promise<void>;
 }
 
+/** CRUD for a per-user collection of records. */
+export interface CollectionService<T, I> {
+  list(userId: string): Promise<T[]>;
+  create(userId: string, input: I): Promise<T>;
+  update(userId: string, id: string, patch: Partial<I>): Promise<T>;
+  remove(userId: string, id: string): Promise<void>;
+}
+
+/** Daily college tools: courses + attendance, timetable, tasks and grades. */
+export interface StudentService {
+  courses: CollectionService<Course, CourseInput>;
+  sessions: CollectionService<ClassSession, ClassSessionInput>;
+  tasks: CollectionService<StudentTask, StudentTaskInput>;
+  grades: CollectionService<GradeEntry, GradeEntryInput>;
+}
+
+export interface SecurityStatus {
+  emailVerified: boolean;
+  lastSignInAt?: string;
+  /** strength score (0–4) of the password set through CiteCraft, if known */
+  passwordScore?: number;
+  passwordChangedAt?: string;
+  /** authenticator-app (TOTP) factors */
+  factors: { id: string; name: string; createdAt: string; verified: boolean }[];
+}
+
+/** Account security: two-factor authentication, passwords and sessions. */
+export interface SecurityService {
+  available: { mfa: boolean; otherDevices: boolean };
+  getStatus(): Promise<SecurityStatus>;
+  /** Starts authenticator-app set-up; show the QR code, then call verifyTotp. */
+  enrollTotp(): Promise<{ factorId: string; qrCode: string; secret: string }>;
+  verifyTotp(factorId: string, code: string): Promise<void>;
+  removeFactor(factorId: string): Promise<void>;
+  /** After password sign-in: does this session still need a 2FA code? */
+  mfaRequirement(): Promise<{ required: boolean; factorId?: string }>;
+  changePassword(newPassword: string, score: number): Promise<void>;
+  recordPasswordStrength(score: number): Promise<void>;
+  signOutOtherDevices(): Promise<void>;
+}
+
 export interface SummarizeRequest {
   fileName: string;
   mimeType: string;
@@ -143,6 +192,8 @@ export interface Backend {
   tickets: TicketService;
   ai: AiService;
   readingList: ReadingListService;
+  student: StudentService;
+  security: SecurityService;
 }
 
 export const MAX_DOCUMENT_BYTES = 10 * 1024 * 1024; // 10 MB
