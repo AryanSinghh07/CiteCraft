@@ -13,9 +13,13 @@ import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useUpdateProfile } from '@/features/profile/hooks/useUpdateProfile';
 import PublicProfileSettings from '@/features/profile/components/PublicProfileSettings';
 import { MAX_AVATAR_BYTES } from '@/services';
-import type { Profile as ProfileType } from '@/types';
+import type { AccountType, Profile as ProfileType } from '@/types';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 
-type FormState = Omit<ProfileType, 'id' | 'researchInterests'> & { researchInterests: string[] };
+type FormState = Omit<ProfileType, 'id' | 'researchInterests' | 'role' | 'isPublic' | 'publicSlug'> & {
+  researchInterests: string[];
+  accountType: AccountType;
+};
 
 const toFormState = (p: ProfileType | null): FormState => ({
   name: p?.name ?? '',
@@ -29,6 +33,10 @@ const toFormState = (p: ProfileType | null): FormState => ({
   orcid: p?.orcid ?? '',
   googleScholar: p?.googleScholar ?? '',
   website: p?.website ?? '',
+  accountType: p?.accountType ?? 'researcher',
+  program: p?.program ?? '',
+  yearOfStudy: p?.yearOfStudy ?? '',
+  supervisor: p?.supervisor ?? '',
 });
 
 const Profile = () => {
@@ -149,7 +157,11 @@ const Profile = () => {
                   )}
 
                   <h2 className="text-xl font-semibold">{profile?.name || 'Your name'}</h2>
-                  <p className="text-muted-foreground">{profile?.position}</p>
+                  <p className="text-muted-foreground">
+                    {profile?.accountType === 'student'
+                      ? [profile.program, profile.yearOfStudy].filter(Boolean).join(' · ') || 'Student'
+                      : profile?.position}
+                  </p>
                   <p className="text-muted-foreground">{profile?.affiliation}</p>
 
                   <Separator className="my-4" />
@@ -187,16 +199,68 @@ const Profile = () => {
                         <Input id="email" name="email" type="email" value={formData.email} disabled />
                       </div>
 
-                      <div className="space-y-2">
-                        <Label htmlFor="position">Position</Label>
-                        <Input
-                          id="position"
-                          name="position"
-                          value={formData.position}
-                          onChange={handleChange}
-                          placeholder="e.g. Associate Professor"
-                        />
+                      <div className="space-y-2 md:col-span-2">
+                        <Label>Account type</Label>
+                        <ToggleGroup
+                          type="single"
+                          value={formData.accountType}
+                          onValueChange={v => v && setFormData(prev => ({ ...prev, accountType: v as AccountType }))}
+                          className="grid grid-cols-2 gap-1 rounded-lg bg-muted p-1 sm:max-w-sm"
+                        >
+                          <ToggleGroupItem value="student" className="data-[state=on]:bg-background data-[state=on]:shadow-sm">
+                            Student
+                          </ToggleGroupItem>
+                          <ToggleGroupItem value="researcher" className="data-[state=on]:bg-background data-[state=on]:shadow-sm">
+                            Researcher / Faculty
+                          </ToggleGroupItem>
+                        </ToggleGroup>
                       </div>
+
+                      {formData.accountType === 'student' ? (
+                        <>
+                          <div className="space-y-2">
+                            <Label htmlFor="program">Program</Label>
+                            <Input
+                              id="program"
+                              name="program"
+                              value={formData.program}
+                              onChange={handleChange}
+                              placeholder="e.g. B.Tech Computer Science"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="yearOfStudy">Year of study</Label>
+                            <Input
+                              id="yearOfStudy"
+                              name="yearOfStudy"
+                              value={formData.yearOfStudy}
+                              onChange={handleChange}
+                              placeholder="e.g. 3rd year, Final year, PhD year 2"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="supervisor">Supervisor / advisor</Label>
+                            <Input
+                              id="supervisor"
+                              name="supervisor"
+                              value={formData.supervisor}
+                              onChange={handleChange}
+                              placeholder="Optional"
+                            />
+                          </div>
+                        </>
+                      ) : (
+                        <div className="space-y-2">
+                          <Label htmlFor="position">Position</Label>
+                          <Input
+                            id="position"
+                            name="position"
+                            value={formData.position}
+                            onChange={handleChange}
+                            placeholder="e.g. Associate Professor"
+                          />
+                        </div>
+                      )}
 
                       <div className="space-y-2">
                         <Label htmlFor="department">Department</Label>
@@ -210,7 +274,7 @@ const Profile = () => {
                       </div>
 
                       <div className="space-y-2 md:col-span-2">
-                        <Label htmlFor="affiliation">Affiliation</Label>
+                        <Label htmlFor="affiliation">{formData.accountType === 'student' ? 'University / college' : 'Affiliation'}</Label>
                         <Input
                           id="affiliation"
                           name="affiliation"
@@ -229,7 +293,11 @@ const Profile = () => {
                           maxLength={2000}
                           value={formData.bio}
                           onChange={handleChange}
-                          placeholder="A short description of your research"
+                          placeholder={
+                            formData.accountType === 'student'
+                              ? 'What you study, your projects and what you want to work on'
+                              : 'A short description of your research'
+                          }
                         />
                       </div>
 
