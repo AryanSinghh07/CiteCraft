@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { FileText, Download, Printer } from 'lucide-react';
 import { generatePublicationSummary } from '@/utils/summary';
+import ImpactMetrics from './ImpactMetrics';
 
 interface PublicationSummaryProps {
   publications: Publication[];
@@ -20,7 +21,7 @@ const PublicationSummary = ({ publications, ownerName }: PublicationSummaryProps
     () => generatePublicationSummary(publications, ownerName),
     [publications, ownerName],
   );
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState('impact');
 
   const COLORS = ['#4285F4', '#34A853', '#FBBC05', '#EA4335', '#8AB4F8'];
 
@@ -151,8 +152,9 @@ ${publicationText}
         </CardContent>
       </Card>
 
-      <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid grid-cols-4 w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid grid-cols-3 sm:grid-cols-5 w-full h-auto">
+          <TabsTrigger value="impact">Impact</TabsTrigger>
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="timeline">Timeline</TabsTrigger>
           <TabsTrigger value="venues">Venues</TabsTrigger>
@@ -274,6 +276,10 @@ ${publicationText}
           </div>
         </TabsContent>
         
+        <TabsContent value="impact" className="animate-fade-in">
+          <ImpactMetrics publications={publications} />
+        </TabsContent>
+
         <TabsContent value="collaborators" className="animate-fade-in">
           <Card className="glass-card">
             <CardHeader className="pb-2">

@@ -59,7 +59,7 @@ CiteCraft/
 │   │   ├── types.ts           Backend interfaces
 │   │   └── index.ts           Chooses the active backend
 │   ├── types/                 Shared TypeScript types
-│   └── utils/                 Pure helpers (summary statistics)
+│   └── utils/                 Pure helpers (summary stats, h-index / i10, safe URLs)
 ├── .env.example
 └── netlify.toml
 ```
@@ -71,7 +71,8 @@ CiteCraft/
 | `/` | public |
 | `/login`, `/signup` | signed-out only |
 | `/forgot-password`, `/reset-password` | public |
-| `/dashboard`, `/profile`, `/summary` | signed-in only (`ProtectedRoute`) |
+| `/u/:slug` | public — opt-in profile page (read through `get_public_profile()`, never exposes email) |
+| `/dashboard`, `/profile`, `/summary`, `/cv` | signed-in only (`ProtectedRoute`) |
 | `/support`, `/support/:ticketId` | signed-in only — raise and follow tickets |
 | `/admin/tickets` | admins only (`AdminRoute`) |
 
@@ -81,6 +82,18 @@ CiteCraft/
 - Storage paths start with the user's id; storage policies check that folder.
 - `profiles.role` cannot be changed by users themselves (trigger), only via SQL / service role.
 - A user's DOI must be unique within their own publications.
+- Public profiles are opt-in. Visitors can only call `get_public_profile(slug)`, which returns
+  safe fields; the tables themselves stay private. User-supplied links are rendered only if they
+  are `http(s)` (`src/utils/safeUrl.ts`).
+
+## Publications toolkit (`src/features/publications/utils`)
+
+| File | Does |
+|---|---|
+| `doi.ts` | Crossref lookup, DOI normalising, duplicate detection for imports |
+| `bibtex.ts` | BibTeX parser (LaTeX accents, `@string`/comments skipped) and exporter |
+| `citations.ts` | APA 7, MLA 9 and IEEE formatting |
+| `exporters.ts` | CSV (Excel-safe, formula-injection safe), .bib and reference list downloads |
 
 ## Support tickets
 

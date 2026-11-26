@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Camera, Globe, GraduationCap, Loader2, Save, User as UserIcon, X } from 'lucide-react';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useUpdateProfile } from '@/features/profile/hooks/useUpdateProfile';
+import PublicProfileSettings from '@/features/profile/components/PublicProfileSettings';
 import { MAX_AVATAR_BYTES } from '@/services';
 import type { Profile as ProfileType } from '@/types';
 
@@ -167,7 +168,7 @@ const Profile = () => {
               </Card>
             </div>
 
-            <div className="md:col-span-2">
+            <div className="md:col-span-2 space-y-6">
               <Card className="glass-card">
                 <CardHeader>
                   <CardTitle>Edit Profile</CardTitle>
@@ -338,6 +339,8 @@ const Profile = () => {
                   </form>
                 </CardContent>
               </Card>
+
+              {profile && <PublicProfileSettings profile={profile} />}
             </div>
           </div>
         </div>

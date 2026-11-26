@@ -12,17 +12,21 @@ import PublicationList from '@/features/publications/components/PublicationList'
 import PublicationForm from '@/features/publications/components/PublicationForm';
 import PublicationSummary from '@/features/publications/components/PublicationSummary';
 import DocumentUpload from '@/features/documents/components/DocumentUpload';
+import ImportDialog from '@/features/publications/components/ImportDialog';
+import ExportMenu from '@/features/publications/components/ExportMenu';
+import { hIndex, i10Index } from '@/utils/metrics';
 import { usePublications } from '@/features/publications/hooks/usePublications';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import type { Publication } from '@/types';
-import { Plus, Book, ChartBar, User as UserIcon, FileText, Info, Pencil, AlertTriangle } from 'lucide-react';
+import type { Publication, PublicationInput } from '@/types';
+import { Plus, Book, ChartBar, User as UserIcon, FileText, Info, Pencil, AlertTriangle, Upload } from 'lucide-react';
 
 const errorMessage = (error: unknown) => (error instanceof Error ? error.message : 'Something went wrong.');
 
 const Dashboard = () => {
   const { profile, mode } = useAuth();
-  const { publications, isLoading, error, refetch, create, update, remove } = usePublications();
+  const { publications, isLoading, error, refetch, create, createMany, update, remove } = usePublications();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isImportOpen, setIsImportOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('publications');
   const { toast } = useToast();
 
@@ -33,6 +37,16 @@ const Dashboard = () => {
       toast({ title: 'Publication added', description: input.title });
     } catch (err) {
       toast({ title: 'Could not add publication', description: errorMessage(err), variant: 'destructive' });
+    }
+  };
+
+  const handleImport = async (inputs: PublicationInput[]) => {
+    try {
+      const created = await createMany.mutateAsync(inputs);
+      toast({ title: `Imported ${created.length} ${created.length === 1 ? 'publication' : 'publications'}` });
+    } catch (err) {
+      toast({ title: 'Import failed', description: errorMessage(err), variant: 'destructive' });
+      throw err;
     }
   };
 
@@ -57,9 +71,9 @@ const Dashboard = () => {
 
   const stats = [
     { label: 'Total Publications', value: publications.length },
-    { label: 'Journal Articles', value: publications.filter(p => p.type === 'journal').length },
-    { label: 'Conference Papers', value: publications.filter(p => p.type === 'conference').length },
-    { label: 'Total Citations', value: publications.reduce((sum, p) => sum + (p.citations || 0), 0) },
+    { label: 'Total Citations', value: publications.reduce((sum, p) => sum + (p.citations || 0), 0).toLocaleString() },
+    { label: 'h-index', value: hIndex(publications) },
+    { label: 'i10-index', value: i10Index(publications) },
   ];
 
   return (
@@ -85,10 +99,17 @@ const Dashboard = () => {
               <p className="text-muted-foreground">Manage your publications and generate summaries</p>
             </div>
 
-            <Button onClick={() => setIsAddDialogOpen(true)}>
-              <Plus size={16} className="mr-2" />
-              Add Publication
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <ExportMenu publications={publications} />
+              <Button variant="outline" onClick={() => setIsImportOpen(true)}>
+                <Upload size={16} className="mr-2" />
+                Import
+              </Button>
+              <Button onClick={() => setIsAddDialogOpen(true)}>
+                <Plus size={16} className="mr-2" />
+                Add Publication
+              </Button>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-8">
@@ -246,6 +267,14 @@ const Dashboard = () => {
           />
         </DialogContent>
       </Dialog>
+
+      <ImportDialog
+        open={isImportOpen}
+        onOpenChange={setIsImportOpen}
+        existing={publications}
+        onImport={handleImport}
+        isImporting={createMany.isPending}
+      />
 
       <Footer />
     </div>

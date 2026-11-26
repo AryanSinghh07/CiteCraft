@@ -11,6 +11,8 @@ import Summary from '@/pages/Summary';
 import Support from '@/pages/Support';
 import SupportTicket from '@/pages/SupportTicket';
 import AdminTickets from '@/pages/AdminTickets';
+import PublicProfile from '@/pages/PublicProfile';
+import CV from '@/pages/CV';
 import NotFound from '@/pages/NotFound';
 
 const AppRoutes = () => (
@@ -19,6 +21,7 @@ const AppRoutes = () => (
     <Route path="/" element={<Index />} />
     <Route path="/forgot-password" element={<ForgotPassword />} />
     <Route path="/reset-password" element={<ResetPassword />} />
+    <Route path="/u/:slug" element={<PublicProfile />} />
 
     {/* Only when signed out */}
     <Route element={<GuestRoute />}>
@@ -31,6 +34,7 @@ const AppRoutes = () => (
       <Route path="/dashboard" element={<Dashboard />} />
       <Route path="/profile" element={<Profile />} />
       <Route path="/summary" element={<Summary />} />
+      <Route path="/cv" element={<CV />} />
       <Route path="/support" element={<Support />} />
       <Route path="/support/:ticketId" element={<SupportTicket />} />
 

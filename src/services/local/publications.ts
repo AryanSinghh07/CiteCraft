@@ -19,6 +19,14 @@ export const localPublications: PublicationService = {
     return publication;
   },
 
+  async createMany(userId, inputs) {
+    await simulateLatency(400);
+    const now = new Date().toISOString();
+    const created: Publication[] = inputs.map(input => ({ ...input, id: newId(), createdAt: now, updatedAt: now }));
+    save(userId, [...created, ...load(userId)]);
+    return created;
+  },
+
   async update(userId, publication) {
     await simulateLatency();
     const list = load(userId);

@@ -4,6 +4,7 @@ import type {
   Profile,
   Publication,
   PublicationInput,
+  PublicProfileData,
   StaffMember,
   Ticket,
   TicketAttachment,
@@ -44,11 +45,28 @@ export interface ProfileService {
   getProfile(userId: string): Promise<Profile | null>;
   updateProfile(userId: string, patch: Partial<Omit<Profile, 'id'>>): Promise<Profile>;
   uploadAvatar(userId: string, file: File): Promise<string>;
+  /** Anyone can call this; returns null unless the profile is public. */
+  getPublicProfile(slug: string): Promise<PublicProfileData | null>;
 }
+
+/** 3–40 chars of lowercase letters, numbers and single hyphens (matches the database check). */
+export const PUBLIC_SLUG_PATTERN = /^(?=.{3,40}$)[a-z0-9]+(-[a-z0-9]+)*$/;
+
+export const slugify = (text: string) =>
+  text
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 40)
+    .replace(/-+$/g, '');
 
 export interface PublicationService {
   list(userId: string): Promise<Publication[]>;
   create(userId: string, input: PublicationInput): Promise<Publication>;
+  /** Bulk insert (imports). Callers should remove duplicate DOIs first. */
+  createMany(userId: string, inputs: PublicationInput[]): Promise<Publication[]>;
   update(userId: string, publication: Publication): Promise<Publication>;
   remove(userId: string, id: string): Promise<void>;
 }

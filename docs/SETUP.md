@@ -28,6 +28,7 @@ Open http://localhost:8080 and sign in with one of the demo accounts, or create 
    - `supabase/migrations/0001_core_schema.sql` — profiles, publications, documents + security rules
    - `supabase/migrations/0002_storage.sql` — `avatars` and `documents` storage buckets
    - `supabase/migrations/0003_support_tickets.sql` — support ticket tables, rules and `ticket-attachments` bucket
+   - `supabase/migrations/0004_public_profiles.sql` — opt-in public profile pages (`/u/<slug>`)
 
    The files are safe to run again. If the Supabase GitHub integration is enabled with
    `supabase` as the directory, they are also applied automatically when merged.
@@ -71,6 +72,11 @@ under **Authentication → Emails** before launch, or turn off **Confirm email**
 
 1. Netlify → **Site configuration → Environment variables**: add `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`.
 2. Trigger a redeploy. Without these variables the site still works in demo mode.
+
+## External services
+
+- **Crossref** (`api.crossref.org`) — DOI lookups for “Fill in from a DOI” and bulk DOI import.
+  Free, no key needed. Only the DOI is sent.
 
 ## Optional: document summaries
 
