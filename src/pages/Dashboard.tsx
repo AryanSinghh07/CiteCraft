@@ -15,6 +15,7 @@ import DocumentUpload from '@/features/documents/components/DocumentUpload';
 import ImportDialog from '@/features/publications/components/ImportDialog';
 import ExportMenu from '@/features/publications/components/ExportMenu';
 import ProfileStrength from '@/features/dashboard/components/ProfileStrength';
+import StudentHub from '@/features/student/components/StudentHub';
 import { PUBLICATION_TYPES } from '@/features/publications/utils/publicationTypes';
 import { usePublications } from '@/features/publications/hooks/usePublications';
 import { useDocuments } from '@/features/documents/hooks/useDocuments';
@@ -160,8 +161,9 @@ const Dashboard = () => {
             </div>
           </section>
 
-          {/* Stats */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          {/* Students: daily college overview. Researchers: research metrics. */}
+          {isStudent && <StudentHub />}
+          <div className={isStudent ? 'hidden' : 'grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8'}>
             <StatCard
               label={workLabel}
               value={publications.length}
