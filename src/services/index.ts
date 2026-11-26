@@ -9,8 +9,13 @@ import type { Backend } from './types';
  */
 export const backend: Backend = backendMode === 'supabase' ? supabaseBackend : localBackend;
 
-export const { auth: authService, profiles: profileService, publications: publicationService, documents: documentService } =
-  backend;
+export const {
+  auth: authService,
+  profiles: profileService,
+  publications: publicationService,
+  documents: documentService,
+  tickets: ticketService,
+} = backend;
 
 export { backendMode };
 export * from './types';
