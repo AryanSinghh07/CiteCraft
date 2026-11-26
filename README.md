@@ -51,7 +51,8 @@ A sophisticated web-based tool designed for faculty members and researchers to *
 - [x] **Phase 1.5** — Support ticket system: raise queries, threaded replies, attachments, internal notes, admin panel with stats, ratings
 - [x] **Phase 2** — DOI lookup & bulk import (DOI / BibTeX), h-index & i10-index, export (CSV, BibTeX, APA / MLA / IEEE, printable PDF CV), shareable public profile at `/u/your-name`
 - [x] **Phase 3** — Redesigned landing page, light / dark / system theme, page transitions, animated counters, new navigation with account menu, pages loaded on demand (37% less JavaScript on first visit)
-- [x] **Phase 4** — AI assistant that explains the app and can add publications or raise tickets for you, AI summaries of any document (PDF, Word, PowerPoint, Excel, images…), redesigned dashboard and research insights
+- [x] **Phase 4** — AI summaries of any document (PDF, Word, PowerPoint, Excel, images…), redesigned dashboard and research insights
+- [x] **Phase 5** — Student accounts (projects, theses, reports, preprints, posters), reading list with notes, free citation generator (APA, MLA, IEEE, Harvard, Chicago), scripted in-app assistant that answers questions and guides you through adding work and raising tickets
 
 ---
 
@@ -59,7 +60,7 @@ A sophisticated web-based tool designed for faculty members and researchers to *
 
 - **Frontend**: React 18, TypeScript, Vite, Tailwind CSS, shadcn/ui, TanStack Query, Recharts
 - **Backend**: Supabase (Auth, Postgres with Row Level Security, Storage, Edge Functions)
-- **AI**: Claude (Anthropic API) via Supabase Edge Functions
+- **AI**: Claude (Anthropic API) via a Supabase Edge Function, for document summaries
 - **Demo mode**: runs fully in the browser (localStorage + IndexedDB) when no backend is configured
 - **Deployment**: Netlify
 
