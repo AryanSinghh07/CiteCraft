@@ -26,6 +26,8 @@ export interface AuthContextValue {
   cancelMfa: () => Promise<void>;
   signUp: (params: SignUpParams) => Promise<SignUpResult>;
   signOut: () => Promise<void>;
+  /** Permanently deletes the account and all its data. */
+  deleteAccount: () => Promise<void>;
   refreshProfile: () => Promise<void>;
   setProfile: (profile: Profile) => void;
 }
@@ -147,6 +149,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
       signOut: async () => {
         await authService.signOut();
+        await admit(null);
+      },
+      deleteAccount: async () => {
+        await authService.deleteAccount();
         await admit(null);
       },
       refreshProfile: () => loadProfile(user),
