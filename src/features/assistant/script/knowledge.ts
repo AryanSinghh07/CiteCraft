@@ -17,7 +17,7 @@ export const TOPICS: Topic[] = [
   {
     id: 'add',
     title: 'Add a publication',
-    keywords: ['add', 'new publication', 'add paper', 'publish', 'upload paper', 'add work', 'add project', 'add thesis'],
+    keywords: ['new publication', 'add paper', 'add a paper', 'add publication', 'publish', 'upload paper', 'add work', 'add project', 'add thesis'],
     answer: `There are three ways to add work:
 1. **Ask me** — say *add a publication* and I'll guide you, or just paste a DOI here.
 2. On the [Dashboard](/dashboard), click **Add publication**, paste a DOI into **Fill in from a DOI** and press **Fetch** — the details fill themselves in.
@@ -133,6 +133,50 @@ See all your metrics and trends on [Research insights](/summary), or ask me *my 
     title: 'Dark mode',
     keywords: ['dark', 'light', 'theme', 'night mode', 'colour', 'color'],
     answer: `Click the **sun / moon** button in the top bar and choose **Light**, **Dark** or **System**.`,
+  },
+  {
+    id: 'timetable',
+    title: 'Set up my timetable',
+    keywords: ['timetable', 'time table', 'schedule', 'classes', 'lecture', 'lectures', 'class today', 'routine'],
+    answer: `Open [College → Timetable](/college?tab=timetable):
+1. Add your **courses** (subjects) — name, code, credits and a colour.
+2. Click **Add class** and pick the day, start and end time and room.
+
+Today's classes (with **NOW** / **NEXT**) then show on your dashboard. Ask me *my day* any time.`,
+  },
+  {
+    id: 'deadlines',
+    title: 'Track assignments & exams',
+    keywords: ['assignment', 'assignments', 'deadline', 'deadlines', 'exam', 'exams', 'quiz', 'homework', 'due', 'submission'],
+    answer: `Use [College → Assignments & exams](/college?tab=tasks): click **Add deadline**, choose the type, course, due date and priority. Tasks are grouped into **Overdue**, **Due today**, **Next 7 days** and **Later** — tick the box when you're done.`,
+  },
+  {
+    id: 'attendance',
+    title: 'Track attendance (75% rule)',
+    keywords: ['attendance', 'bunk', 'can i bunk', 'can i miss', 'how many classes', 'bunk classes', 'skip class', 'miss class', 'absent', 'present', '75', 'shortage', 'detention'],
+    answer: `In [College → Attendance](/college?tab=attendance), tap **Present** or **Absent** after each class. For every course you'll see your % and either *“You can miss N classes”* or *“Attend the next N classes to reach 75%”*. You can change the minimum % per course.`,
+  },
+  {
+    id: 'cgpa',
+    title: 'Calculate SGPA / CGPA',
+    keywords: ['cgpa', 'sgpa', 'gpa', 'grade', 'grades', 'marks', 'percentage', 'result', 'semester'],
+    answer: `Open [College → CGPA](/college?tab=grades): add each semester's courses with credits and grade — SGPA and CGPA are calculated for you (10-point or 4-point scale), with a rough percentage. The **Target planner** tells you the SGPA you need next semester.`,
+  },
+  {
+    id: 'focus',
+    title: 'Focus timer (Pomodoro)',
+    keywords: ['focus', 'pomodoro', 'study timer', 'timer', 'concentrate', 'study session'],
+    answer: `Use the **Focus** card on your dashboard or [College → Focus timer](/college?tab=focus): 25-minute focus sessions with short breaks. Your sessions today are counted.`,
+  },
+  {
+    id: 'security',
+    title: 'Secure my account (2FA)',
+    keywords: ['security', 'secure', '2fa', 'two factor', 'two-factor', 'authenticator', 'otp', 'hacked', 'protect', 'change password', 'security level'],
+    answer: `Open [Security](/security) (account menu → **Security**) to see your **security level** and raise it:
+- Turn on **two-factor authentication** with an authenticator app — then a stolen password alone can't get in.
+- Set a **strong password** (the meter shows how strong it is).
+- **Sign out other devices** if you used a shared computer.
+- **Download my data** for a copy of everything you've added.`,
   },
   {
     id: 'support',
