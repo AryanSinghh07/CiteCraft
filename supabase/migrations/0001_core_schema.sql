@@ -5,8 +5,6 @@
 -- Run in Supabase Dashboard -> SQL Editor (or `supabase db push`).
 -- =====================================================================
 
-create extension if not exists "pgcrypto";
-
 -- Keeps updated_at current on every UPDATE.
 create or replace function public.set_updated_at()
 returns trigger
