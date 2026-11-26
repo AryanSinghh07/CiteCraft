@@ -45,19 +45,34 @@ A sophisticated web-based tool designed for faculty members and researchers to *
 
 ---
 
+## 🗺️ v2 Roadmap
+
+- [x] **Phase 1** — Real accounts (sign up, sign in, password reset), protected pages, saved publications, editable profile with photo upload, document library
+- [ ] **Phase 1.5** — Support ticket system for queries
+- [ ] **Phase 2** — DOI & BibTeX import, h-index / i10-index, export (PDF, CSV, citation styles), public profile page
+- [ ] **Phase 3** — UI refresh, dark mode, animations
+
+---
+
 ## 🛠️ Tech Stack
 
-- **Frontend**: HTML5, CSS3, TypeScript (React.js / Vue.js)
-- **Backend**: Python (Flask / Django)
-- **Database**: SQLite / PostgreSQL
-- **Deployment**: Netlify, Heroku / AWS
+- **Frontend**: React 18, TypeScript, Vite, Tailwind CSS, shadcn/ui, TanStack Query, Recharts
+- **Backend**: Supabase (Auth, Postgres with Row Level Security, Storage)
+- **Demo mode**: runs fully in the browser (localStorage + IndexedDB) when no backend is configured
+- **Deployment**: Netlify
 
 ---
 
 ## 🚀 Getting Started
 
-1. **Clone the repository**
+```bash
+git clone https://github.com/AryanSinghh07/CiteCraft.git
+cd CiteCraft
+npm install
+npm run dev
+```
 
-   ```bash
-   git clone https://github.com/AryanSinghh07/CiteCraft.git
-   cd CiteCraft
+Open http://localhost:8080 — the app starts in demo mode.
+
+- Connecting Supabase and deploying: [docs/SETUP.md](docs/SETUP.md)
+- Folder structure and data stores: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
