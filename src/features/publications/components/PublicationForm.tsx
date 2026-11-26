@@ -6,7 +6,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { Publication, PublicationType } from '@/types';
-import { XIcon, PlusIcon, Loader2 } from 'lucide-react';
+import { XIcon, PlusIcon, Loader2, Wand2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { lookupDoi } from '../utils/doi';
 
 interface PublicationFormProps {
   initialData?: Publication;
@@ -28,6 +30,33 @@ const PublicationForm = ({ initialData, onSubmit, onCancel, isSubmitting = false
     }
   );
   const [tag, setTag] = useState('');
+  const [doiQuery, setDoiQuery] = useState('');
+  const [isLookingUp, setIsLookingUp] = useState(false);
+  const { toast } = useToast();
+
+  // Fill the form from Crossref (new publications only).
+  const handleDoiFill = async () => {
+    if (!doiQuery.trim()) return;
+    setIsLookingUp(true);
+    try {
+      const found = await lookupDoi(doiQuery);
+      setPublication(prev => ({
+        ...prev,
+        ...found,
+        authors: found.authors.length ? found.authors : prev.authors,
+        tags: found.tags?.length ? found.tags : prev.tags,
+      }));
+      toast({ title: 'Details filled in', description: 'Check the fields below, then save.' });
+    } catch (error) {
+      toast({
+        title: 'DOI lookup failed',
+        description: error instanceof Error ? error.message : 'Something went wrong.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLookingUp(false);
+    }
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -122,6 +151,33 @@ const PublicationForm = ({ initialData, onSubmit, onCancel, isSubmitting = false
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {!initialData && (
+        <div className="rounded-lg border border-dashed border-primary/30 bg-primary/5 p-4 space-y-2">
+          <Label htmlFor="doi-lookup" className="flex items-center gap-1.5">
+            <Wand2 className="h-4 w-4 text-primary" /> Fill in from a DOI
+          </Label>
+          <div className="flex gap-2">
+            <Input
+              id="doi-lookup"
+              value={doiQuery}
+              onChange={e => setDoiQuery(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  void handleDoiFill();
+                }
+              }}
+              placeholder="10.1038/nature14539 or https://doi.org/…"
+              disabled={isLookingUp}
+            />
+            <Button type="button" variant="secondary" onClick={handleDoiFill} disabled={!doiQuery.trim() || isLookingUp}>
+              {isLookingUp ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Fetch'}
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground">Title, authors, venue, year and citation count are filled automatically.</p>
+        </div>
+      )}
+
       <div className="space-y-2">
         <Label htmlFor="title">Title *</Label>
         <Input
