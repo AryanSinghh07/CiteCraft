@@ -23,6 +23,8 @@ import {
   Menu,
   Printer,
   Quote,
+  School,
+  Shield,
   ShieldCheck,
   Sparkles,
   User,
@@ -75,7 +77,9 @@ const Navbar = () => {
   const links: NavEntry[] = user
     ? [
         { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-        { to: '/summary', label: 'Insights', icon: BarChart3 },
+        profile?.accountType === 'student'
+          ? { to: '/college', label: 'College', icon: School }
+          : { to: '/summary', label: 'Insights', icon: BarChart3 },
         { to: '/reading-list', label: 'Reading list', icon: BookMarked },
         { to: '/summarize', label: 'Summarize', icon: Sparkles },
         { to: '/support', label: 'Support', icon: LifeBuoy },
@@ -165,6 +169,11 @@ const Navbar = () => {
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuItem asChild>
+                    <Link to="/security">
+                      <Shield className="mr-2 h-4 w-4" /> Security
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
                     <Link to="/cv">
                       <Printer className="mr-2 h-4 w-4" /> Printable CV
                     </Link>
@@ -234,7 +243,7 @@ const Navbar = () => {
                   <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                 </div>
               </div>
-              {[...links, { to: '/profile', label: 'Profile', icon: User }, { to: '/cv', label: 'Printable CV', icon: Printer }, { to: '/cite', label: 'Citation generator', icon: Quote }].map(
+              {[...links, { to: '/profile', label: 'Profile', icon: User }, { to: '/security', label: 'Security', icon: Shield }, { to: '/cv', label: 'Printable CV', icon: Printer }, { to: '/cite', label: 'Citation generator', icon: Quote }].map(
                 (link, i) => (
                   <NavLink
                     key={link.to}
