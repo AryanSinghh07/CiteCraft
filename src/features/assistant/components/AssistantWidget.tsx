@@ -2,41 +2,31 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import Markdown from '@/components/common/Markdown';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import { ArrowUp, Bot, CheckCircle2, LifeBuoy, Loader2, MessageCircle, RotateCcw, Sparkles, X } from 'lucide-react';
-import { useAssistant } from '../hooks/useAssistant';
+import { ArrowRight, ArrowUp, Bot, CheckCircle2, MessageCircle, RotateCcw, Sparkles, X } from 'lucide-react';
+import { useAssistant, type QuickReply } from '../hooks/useAssistant';
 
-const SUGGESTIONS = [
-  'Add a paper from a DOI',
-  'What is my h-index?',
-  'How do I import from Google Scholar?',
-  'How do I make my profile public?',
-  'Export my publications as an APA list',
-];
-
-/** Floating chat assistant for signed-in users. */
+/** Floating scripted assistant for signed-in users. */
 const AssistantWidget = () => {
   const { profile } = useAuth();
   const { pathname } = useLocation();
-  const { messages, isSending, send, clear } = useAssistant();
+  const { messages, isTyping, send, clear, menu } = useAssistant();
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState('');
   const listRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  // Keep the newest message in view.
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' });
-  }, [messages, isSending, open]);
+  }, [messages, isTyping, open]);
 
   useEffect(() => {
     if (open) setTimeout(() => inputRef.current?.focus(), 150);
   }, [open]);
 
-  // Close with Escape.
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false);
@@ -46,17 +36,34 @@ const AssistantWidget = () => {
 
   if (pathname === '/cv') return null;
 
-  const submit = (text = input) => {
-    if (!text.trim() || isSending) return;
-    void send(text);
+  const submit = () => {
+    if (!input.trim() || isTyping) return;
+    void send(input);
     setInput('');
   };
+  const choose = (option: QuickReply) => void send(option.label, option.value);
 
   const firstName = profile?.name?.split(' ')[0];
+  const lastBotIndex = messages.map(m => m.role).lastIndexOf('bot');
+
+  const Options = ({ options }: { options: QuickReply[] }) => (
+    <div className="flex flex-wrap gap-1.5 pt-1">
+      {options.map(option => (
+        <button
+          key={option.value + option.label}
+          type="button"
+          onClick={() => choose(option)}
+          disabled={isTyping}
+          className="rounded-full border bg-card px-3 py-1.5 text-xs font-medium transition-colors hover:border-primary/50 hover:bg-primary/5 hover:text-primary disabled:opacity-50"
+        >
+          {option.label}
+        </button>
+      ))}
+    </div>
+  );
 
   return (
     <>
-      {/* Launcher */}
       <button
         type="button"
         onClick={() => setOpen(o => !o)}
@@ -73,7 +80,6 @@ const AssistantWidget = () => {
         )}
       </button>
 
-      {/* Panel */}
       <div
         role="dialog"
         aria-label="CiteCraft assistant"
@@ -85,12 +91,13 @@ const AssistantWidget = () => {
         )}
       >
         <header className="flex items-center gap-3 border-b bg-gradient-to-r from-primary to-purple-600 px-4 py-3 text-white">
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/20">
+          <div className="relative flex h-9 w-9 items-center justify-center rounded-full bg-white/20">
             <Bot className="h-5 w-5" />
+            <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-400 ring-2 ring-primary" aria-hidden />
           </div>
           <div className="min-w-0 flex-1">
             <p className="font-semibold leading-tight">CiteCraft Assistant</p>
-            <p className="text-xs text-white/80">Help, answers and quick actions</p>
+            <p className="text-xs text-white/80">Quick help and guided actions</p>
           </div>
           {messages.length > 0 && (
             <Tooltip>
@@ -109,31 +116,20 @@ const AssistantWidget = () => {
 
         <div ref={listRef} className="flex-1 space-y-4 overflow-y-auto p-4" aria-live="polite">
           {messages.length === 0 && (
-            <div className="space-y-4 animate-fade-up">
+            <div className="space-y-3 animate-fade-up">
               <div className="rounded-2xl bg-muted p-4 text-sm">
                 <p className="font-medium flex items-center gap-1.5">
-                  <Sparkles className="h-4 w-4 text-primary" /> Hi{firstName ? ` ${firstName}` : ''}!
+                  <Sparkles className="h-4 w-4 text-primary" /> Hi{firstName ? ` ${firstName}` : ''}! 👋
                 </p>
                 <p className="mt-1 text-muted-foreground">
-                  I can explain any part of CiteCraft, look up your stats, and add publications for you — just paste a DOI.
+                  I can answer questions about CiteCraft and walk you through adding work, finding papers or getting support. Tap an option or type a question — you can also paste a DOI.
                 </p>
               </div>
-              <div className="flex flex-wrap gap-2">
-                {SUGGESTIONS.map(s => (
-                  <button
-                    key={s}
-                    type="button"
-                    onClick={() => submit(s)}
-                    className="rounded-full border bg-card px-3 py-1.5 text-xs transition-colors hover:border-primary/50 hover:bg-primary/5 hover:text-primary"
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
+              <Options options={menu} />
             </div>
           )}
 
-          {messages.map(m =>
+          {messages.map((m, index) =>
             m.role === 'user' ? (
               <div key={m.id} className="flex justify-end animate-fade-up">
                 <div className="max-w-[85%] whitespace-pre-wrap break-words rounded-2xl rounded-br-sm bg-primary px-4 py-2.5 text-sm text-primary-foreground">
@@ -149,55 +145,46 @@ const AssistantWidget = () => {
                   <div
                     className={cn(
                       'rounded-2xl rounded-tl-sm px-4 py-2.5 text-sm',
-                      m.isError ? 'border border-destructive/30 bg-destructive/5 text-destructive' : 'bg-muted',
+                      m.tone === 'error' ? 'border border-destructive/30 bg-destructive/5' : 'bg-muted',
                     )}
                   >
-                    {m.isError ? m.content : <Markdown>{m.content}</Markdown>}
+                    <Markdown>{m.content}</Markdown>
                   </div>
-                  {m.actions?.map(action =>
-                    action.type === 'publication_added' ? (
-                      <Link
-                        key={action.id}
-                        to="/dashboard"
-                        onClick={() => setOpen(false)}
-                        className="flex items-center gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/5 px-3 py-2 text-xs hover:bg-emerald-500/10"
-                      >
+                  {m.links?.map(link => (
+                    <Link
+                      key={link.to + link.label}
+                      to={link.to}
+                      onClick={() => setOpen(false)}
+                      className={cn(
+                        'flex items-center gap-2 rounded-lg border px-3 py-2 text-xs transition-colors',
+                        link.tone === 'success'
+                          ? 'border-emerald-500/30 bg-emerald-500/5 hover:bg-emerald-500/10'
+                          : 'border-primary/30 bg-primary/5 hover:bg-primary/10',
+                      )}
+                    >
+                      {link.tone === 'success' ? (
                         <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
-                        <span className="truncate">
-                          Added <strong>{action.title}</strong>
-                        </span>
-                      </Link>
-                    ) : (
-                      <Link
-                        key={action.id}
-                        to={`/support/${action.id}`}
-                        onClick={() => setOpen(false)}
-                        className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2 text-xs hover:bg-primary/10"
-                      >
-                        <LifeBuoy className="h-4 w-4 shrink-0 text-primary" />
-                        <span className="truncate">
-                          Ticket <strong>#CC-{action.ticketNumber}</strong> created — view
-                        </span>
-                      </Link>
-                    ),
-                  )}
+                      ) : (
+                        <ArrowRight className="h-4 w-4 shrink-0 text-primary" />
+                      )}
+                      <span className="truncate font-medium">{link.label}</span>
+                    </Link>
+                  ))}
+                  {/* Buttons only on the latest bot message, so old choices can't be replayed. */}
+                  {index === lastBotIndex && m.options && !isTyping && <Options options={m.options} />}
                 </div>
               </div>
             ),
           )}
 
-          {isSending && (
+          {isTyping && (
             <div className="flex gap-2 animate-fade-up">
               <div className="mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
                 <Bot className="h-4 w-4" />
               </div>
               <div className="flex items-center gap-1 rounded-2xl rounded-tl-sm bg-muted px-4 py-3" aria-label="Assistant is typing">
                 {[0, 150, 300].map(delay => (
-                  <span
-                    key={delay}
-                    className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground/60"
-                    style={{ animationDelay: `${delay}ms` }}
-                  />
+                  <span key={delay} className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground/60" style={{ animationDelay: `${delay}ms` }} />
                 ))}
               </div>
             </div>
@@ -211,29 +198,22 @@ const AssistantWidget = () => {
             submit();
           }}
         >
-          <div className="flex items-end gap-2 rounded-xl border bg-card p-1.5 focus-within:ring-2 focus-within:ring-ring">
-            <Textarea
+          <div className="flex items-center gap-2 rounded-xl border bg-card p-1.5 focus-within:ring-2 focus-within:ring-ring">
+            <Input
               ref={inputRef}
               value={input}
               onChange={e => setInput(e.target.value)}
-              onKeyDown={e => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  submit();
-                }
-              }}
-              rows={1}
-              maxLength={4000}
-              placeholder="Ask anything or paste a DOI…"
-              className="max-h-32 min-h-[40px] resize-none border-0 bg-transparent shadow-none focus-visible:ring-0"
+              maxLength={2000}
+              placeholder="Type a question or paste a DOI…"
+              className="h-9 border-0 bg-transparent shadow-none focus-visible:ring-0"
               aria-label="Message"
             />
-            <Button type="submit" size="icon" className="h-9 w-9 shrink-0 rounded-lg" disabled={!input.trim() || isSending} aria-label="Send">
-              {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowUp className="h-4 w-4" />}
+            <Button type="submit" size="icon" className="h-9 w-9 shrink-0 rounded-lg" disabled={!input.trim() || isTyping} aria-label="Send">
+              <ArrowUp className="h-4 w-4" />
             </Button>
           </div>
           <p className="mt-2 text-center text-[11px] text-muted-foreground">
-            AI can make mistakes — check details before saving.
+            Type <strong>menu</strong> for options or <strong>cancel</strong> to stop at any time.
           </p>
         </form>
       </div>
