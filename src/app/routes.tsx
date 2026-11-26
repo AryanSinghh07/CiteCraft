@@ -22,6 +22,8 @@ const NotFound = lazy(() => import('@/pages/NotFound'));
 const Summarize = lazy(() => import('@/pages/Summarize'));
 const ReadingList = lazy(() => import('@/pages/ReadingList'));
 const Cite = lazy(() => import('@/pages/Cite'));
+const College = lazy(() => import('@/pages/College'));
+const Security = lazy(() => import('@/pages/Security'));
 const AssistantWidget = lazy(() => import('@/features/assistant/components/AssistantWidget'));
 
 /** Scrolls to the top on navigation (but keeps #anchor jumps working). */
@@ -65,6 +67,8 @@ const AppRoutes = () => {
               <Route path="/cv" element={<CV />} />
               <Route path="/summarize" element={<Summarize />} />
               <Route path="/reading-list" element={<ReadingList />} />
+              <Route path="/college" element={<College />} />
+              <Route path="/security" element={<Security />} />
               <Route path="/support" element={<Support />} />
               <Route path="/support/:ticketId" element={<SupportTicket />} />
 
