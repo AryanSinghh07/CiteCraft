@@ -9,12 +9,16 @@ import { useAuth } from '@/features/auth/hooks/useAuth';
 import {
   ArrowRight,
   BarChart3,
+  BookMarked,
+  Briefcase,
+  GraduationCap,
   CheckCircle2,
   Download,
   FileText,
   Globe,
   LifeBuoy,
   Quote,
+  Quote as QuoteIcon,
   Sparkles,
   Upload,
   Wand2,
@@ -42,20 +46,57 @@ const FEATURES = [
     text: 'One link with your bio, metrics and publications. Your email is never shown.',
   },
   {
+    icon: BookMarked,
+    title: 'A reading list that remembers',
+    text: 'Save papers you read with status and notes, then cite or export them in one click.',
+  },
+  {
+    icon: QuoteIcon,
+    title: 'Cite anything, free',
+    text: 'Turn a DOI into an APA, MLA, IEEE, Harvard or Chicago citation — no account needed.',
+  },
+  {
     icon: FileText,
-    title: 'Keep your papers together',
-    text: 'Store PDFs, preprints and slides securely next to the publications they belong to.',
+    title: 'Summarize documents',
+    text: 'Upload a paper, thesis or slide deck and get a clear AI summary in seconds.',
   },
   {
     icon: LifeBuoy,
     title: 'Help when you need it',
-    text: 'Raise a ticket from inside the app and follow the conversation until it is sorted.',
+    text: 'A built-in assistant answers questions and guides you, and support tickets reach a real person.',
   },
 ];
 
+const AUDIENCES = [
+  {
+    icon: GraduationCap,
+    title: 'For students',
+    type: 'student',
+    points: [
+      'Track projects, theses, reports, preprints and posters',
+      'A reading list with notes for every paper you read',
+      'Citations in APA, MLA, IEEE, Harvard and Chicago',
+      'AI summaries of papers, slides and notes',
+      'An academic CV and profile for internships and applications',
+    ],
+  },
+  {
+    icon: Briefcase,
+    title: 'For researchers & faculty',
+    type: 'researcher',
+    points: [
+      'Import publications by DOI or from Google Scholar (BibTeX)',
+      'h-index, i10-index and citation trends',
+      'Reference lists and a printable publication CV',
+      'A public research profile you can share',
+      'Document library with AI summaries',
+    ],
+  },
+] as const;
+
 const STEPS = [
-  { title: 'Create your account', text: 'Sign up free and add your position, department and research interests.' },
-  { title: 'Add your publications', text: 'Import by DOI or BibTeX, or add them by hand. Duplicates are caught for you.' },
+  { title: 'Create your account', text: 'Sign up free as a student or researcher and fill in your profile.' },
+  { title: 'Add your work', text: 'Projects, theses or papers — import by DOI or BibTeX, or add them by hand.' },
   { title: 'Share and export', text: 'Publish your profile link, download your CV and copy citations in any style.' },
 ];
 
@@ -153,7 +194,7 @@ const Index = () => {
             <div className="text-center lg:text-left space-y-7">
               <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary animate-fade-in">
                 <Sparkles className="h-4 w-4" />
-                New: DOI import & public profiles
+                New: student accounts & free citation generator
               </div>
 
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.1] animate-fade-in [animation-delay:100ms] [animation-fill-mode:backwards]">
@@ -164,8 +205,8 @@ const Index = () => {
               </h1>
 
               <p className="text-lg md:text-xl text-muted-foreground max-w-xl mx-auto lg:mx-0 animate-fade-in [animation-delay:200ms] [animation-fill-mode:backwards]">
-                CiteCraft helps faculty and researchers manage publications, track their impact and share a
-                professional profile — in minutes, not hours.
+                CiteCraft helps students and researchers organise their work, cite sources, track impact and
+                share a professional profile — in minutes, not hours.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start animate-fade-in [animation-delay:300ms] [animation-fill-mode:backwards]">
@@ -176,12 +217,15 @@ const Index = () => {
                   </Link>
                 </Button>
                 <Button asChild size="lg" variant="outline">
-                  <a href="#features">See what it does</a>
+                  <Link to="/cite">
+                    <QuoteIcon className="mr-2 h-4 w-4" />
+                    Free citation generator
+                  </Link>
                 </Button>
               </div>
 
               <ul className="flex flex-wrap gap-x-5 gap-y-2 justify-center lg:justify-start text-sm text-muted-foreground animate-fade-in [animation-delay:400ms] [animation-fill-mode:backwards]">
-                {['Free to use', 'APA · MLA · IEEE', 'Works on any device'].map(item => (
+                {['Free for students', 'APA · MLA · IEEE · Harvard', 'Works on any device'].map(item => (
                   <li key={item} className="flex items-center gap-1.5">
                     <CheckCircle2 className="h-4 w-4 text-emerald-500" /> {item}
                   </li>
@@ -200,21 +244,59 @@ const Index = () => {
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <Reveal className="text-center max-w-2xl mx-auto mb-14">
               <p className="text-sm font-semibold uppercase tracking-widest text-primary mb-3">Everything in one place</p>
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">Built for how academics actually work</h2>
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">Built for how students and academics actually work</h2>
               <p className="text-lg text-muted-foreground">
                 Stop maintaining your publication list in five different places.
               </p>
             </Reveal>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {FEATURES.map((feature, i) => (
-                <Reveal key={feature.title} delay={(i % 3) * 100}>
+                <Reveal key={feature.title} delay={(i % 4) * 90}>
                   <div className="group h-full rounded-xl border bg-card p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-primary/30">
                     <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary transition-all duration-300 group-hover:scale-110 group-hover:bg-primary group-hover:text-primary-foreground">
                       <feature.icon className="h-6 w-6" />
                     </div>
                     <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
                     <p className="text-muted-foreground leading-relaxed">{feature.text}</p>
+                  </div>
+                </Reveal>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Audiences */}
+        <section className="py-20 md:py-28">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-5xl">
+            <Reveal className="text-center max-w-2xl mx-auto mb-12">
+              <h2 className="text-3xl md:text-4xl font-bold mb-3">Made for every stage of an academic career</h2>
+              <p className="text-lg text-muted-foreground">From your first project report to your hundredth paper.</p>
+            </Reveal>
+            <div className="grid gap-6 md:grid-cols-2">
+              {AUDIENCES.map((audience, i) => (
+                <Reveal key={audience.title} delay={i * 120}>
+                  <div className="h-full rounded-2xl border bg-card p-6 sm:p-8 shadow-sm hover-lift flex flex-col">
+                    <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                      <audience.icon className="h-6 w-6" />
+                    </div>
+                    <h3 className="text-xl font-semibold mb-4">{audience.title}</h3>
+                    <ul className="space-y-2.5 flex-1">
+                      {audience.points.map(point => (
+                        <li key={point} className="flex gap-2 text-muted-foreground">
+                          <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" />
+                          {point}
+                        </li>
+                      ))}
+                    </ul>
+                    {!user && (
+                      <Button asChild variant={audience.type === 'student' ? 'default' : 'outline'} className="mt-6 group">
+                        <Link to={`/signup?type=${audience.type}`}>
+                          {audience.type === 'student' ? 'Join as a student' : 'Join as a researcher'}
+                          <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                        </Link>
+                      </Button>
+                    )}
                   </div>
                 </Reveal>
               ))}
