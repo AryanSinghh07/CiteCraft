@@ -29,6 +29,7 @@ Open http://localhost:8080 and sign in with one of the demo accounts, or create 
    - `supabase/migrations/0002_storage.sql` — `avatars` and `documents` storage buckets
    - `supabase/migrations/0003_support_tickets.sql` — support ticket tables, rules and `ticket-attachments` bucket
    - `supabase/migrations/0004_public_profiles.sql` — opt-in public profile pages (`/u/<slug>`)
+   - `supabase/migrations/0005_ai_features.sql` — AI usage limits and saved document summaries
 
    The files are safe to run again. If the Supabase GitHub integration is enabled with
    `supabase` as the directory, they are also applied automatically when merged.
@@ -78,8 +79,41 @@ under **Authentication → Emails** before launch, or turn off **Confirm email**
 - **Crossref** (`api.crossref.org`) — DOI lookups for “Fill in from a DOI” and bulk DOI import.
   Free, no key needed. Only the DOI is sent.
 
-## Optional: document summaries
+## 4. AI assistant and document summarizer
 
-The Documents tab can call an external summarization service. Set
-`VITE_SUMMARY_API_URL` to a server that accepts `POST /upload` with a `document`
-file field and returns `{ "summary": "..." }`. When unset, the button is hidden.
+Both run as **Supabase Edge Functions** (`supabase/functions/assistant` and
+`supabase/functions/summarize`) and call Claude with your Anthropic API key. The key is
+stored as a Supabase secret — it never reaches the browser or GitHub.
+
+1. Create an API key at [console.anthropic.com](https://console.anthropic.com) → **API Keys**
+   (billing must be set up on that account).
+2. Run `supabase/migrations/0005_ai_features.sql` (see step 2 above).
+3. Deploy the functions with the Supabase CLI, from the project folder:
+
+   ```bash
+   npx supabase login
+   npx supabase link --project-ref <your-project-ref>
+   npx supabase secrets set ANTHROPIC_API_KEY=sk-ant-...
+   npx supabase functions deploy assistant --no-verify-jwt
+   npx supabase functions deploy summarize --no-verify-jwt
+   ```
+
+   `--no-verify-jwt` is intentional: each function checks the signed-in user itself
+   (`auth.getUser`), which also works with Supabase's newer signing keys.
+
+   *Without the CLI:* Supabase Dashboard → **Edge Functions** → **Deploy a new function** →
+   **Via editor**, name it `assistant`, paste `supabase/functions/assistant/index.ts`, turn off
+   **Verify JWT** in its settings; repeat for `summarize`. Add the secret under
+   **Edge Functions → Secrets**.
+
+### Optional settings (Edge Functions → Secrets)
+
+| Secret | Default | Purpose |
+|---|---|---|
+| `ASSISTANT_MODEL` | `claude-opus-5-5` | Model for the chat assistant |
+| `SUMMARY_MODEL` | `claude-opus-5-5` | Model for document summaries |
+| `AI_DAILY_CHAT_LIMIT` | `60` | Assistant messages per user per 24 h |
+| `AI_DAILY_SUMMARY_LIMIT` | `25` | Summaries per user per 24 h |
+
+Usage is billed to your Anthropic account per token. The daily limits protect you from a
+single account running up costs; lower them or pick a cheaper model to spend less.
