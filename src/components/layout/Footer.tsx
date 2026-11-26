@@ -9,12 +9,15 @@ const Footer = () => {
     ? [
         { to: '/dashboard', label: 'Dashboard' },
         { to: '/summary', label: 'Summary' },
+        { to: '/reading-list', label: 'Reading list' },
         { to: '/cv', label: 'Printable CV' },
+        { to: '/cite', label: 'Citation generator' },
       ]
     : [
         { to: '/', label: 'Home' },
         { to: '/signup', label: 'Create account' },
         { to: '/login', label: 'Sign in' },
+        { to: '/cite', label: 'Free citation generator' },
       ];
 
   const help = [
@@ -34,7 +37,7 @@ const Footer = () => {
               CiteCraft
             </Link>
             <p className="text-sm text-muted-foreground max-w-xs">
-              Manage, analyse and showcase your academic publications — all in one place.
+              Manage, analyse and showcase your academic work — for students and researchers.
             </p>
             <div className="flex gap-3">
               <a
