@@ -3,6 +3,8 @@ import type {
   Profile,
   Publication,
   PublicationInput,
+  ReadingItem,
+  ReadingItemInput,
   Ticket,
   TicketAttachment,
   TicketMessage,
@@ -27,6 +29,10 @@ export interface ProfileRow {
   role?: UserRole;
   is_public?: boolean;
   public_slug?: string | null;
+  account_type?: 'researcher' | 'student';
+  program?: string | null;
+  year_of_study?: string | null;
+  supervisor?: string | null;
 }
 
 export interface PublicationRow {
@@ -38,6 +44,7 @@ export interface PublicationRow {
   journal: string | null;
   conference: string | null;
   book: string | null;
+  venue?: string | null;
   year: number;
   doi: string | null;
   url: string | null;
@@ -78,6 +85,10 @@ export const profileFromRow = (r: ProfileRow): Profile => ({
   role: r.role ?? 'user',
   isPublic: r.is_public ?? false,
   publicSlug: orUndefined(r.public_slug ?? null),
+  accountType: r.account_type ?? 'researcher',
+  program: orUndefined(r.program ?? null),
+  yearOfStudy: orUndefined(r.year_of_study ?? null),
+  supervisor: orUndefined(r.supervisor ?? null),
 });
 
 export const profileToRow = (p: Partial<Omit<Profile, 'id'>>): Partial<ProfileRow> => {
@@ -94,6 +105,10 @@ export const profileToRow = (p: Partial<Omit<Profile, 'id'>>): Partial<ProfileRo
   if (p.googleScholar !== undefined) row.google_scholar = emptyToNull(p.googleScholar);
   if (p.website !== undefined) row.website = emptyToNull(p.website);
   if (p.isPublic !== undefined) row.is_public = p.isPublic;
+  if (p.accountType !== undefined) row.account_type = p.accountType;
+  if (p.program !== undefined) row.program = emptyToNull(p.program);
+  if (p.yearOfStudy !== undefined) row.year_of_study = emptyToNull(p.yearOfStudy);
+  if (p.supervisor !== undefined) row.supervisor = emptyToNull(p.supervisor);
   if (p.publicSlug !== undefined) row.public_slug = emptyToNull(p.publicSlug)?.toLowerCase() ?? null;
   return row;
 };
@@ -106,6 +121,7 @@ export const publicationFromRow = (r: PublicationRow): Publication => ({
   journal: orUndefined(r.journal),
   conference: orUndefined(r.conference),
   book: orUndefined(r.book),
+  venue: orUndefined(r.venue ?? null),
   year: r.year,
   doi: orUndefined(r.doi),
   url: orUndefined(r.url),
@@ -123,6 +139,7 @@ export const publicationToRow = (p: PublicationInput) => ({
   journal: emptyToNull(p.journal),
   conference: emptyToNull(p.conference),
   book: emptyToNull(p.book),
+  venue: emptyToNull(p.venue),
   year: p.year,
   doi: emptyToNull(p.doi),
   url: emptyToNull(p.url),
@@ -224,3 +241,50 @@ export const ticketAttachmentFromRow = (r: TicketAttachmentRow): TicketAttachmen
   storagePath: r.storage_path,
   createdAt: r.created_at,
 });
+
+// ------------------------------------------------------------------ reading list
+
+export interface ReadingRow {
+  id: string;
+  user_id: string;
+  title: string;
+  authors: string[];
+  year: number | null;
+  venue: string | null;
+  doi: string | null;
+  url: string | null;
+  status: ReadingItem['status'];
+  notes: string | null;
+  tags: string[];
+  created_at: string;
+  updated_at: string;
+}
+
+export const readingFromRow = (r: ReadingRow): ReadingItem => ({
+  id: r.id,
+  title: r.title,
+  authors: r.authors ?? [],
+  year: orUndefined(r.year),
+  venue: orUndefined(r.venue),
+  doi: orUndefined(r.doi),
+  url: orUndefined(r.url),
+  status: r.status,
+  notes: orUndefined(r.notes),
+  tags: r.tags ?? [],
+  createdAt: r.created_at,
+  updatedAt: r.updated_at,
+});
+
+export const readingToRow = (p: Partial<ReadingItemInput>) => {
+  const row: Record<string, unknown> = {};
+  if (p.title !== undefined) row.title = p.title.trim();
+  if (p.authors !== undefined) row.authors = p.authors.map(a => a.trim()).filter(Boolean);
+  if (p.year !== undefined) row.year = p.year ?? null;
+  if (p.venue !== undefined) row.venue = emptyToNull(p.venue);
+  if (p.doi !== undefined) row.doi = emptyToNull(p.doi);
+  if (p.url !== undefined) row.url = emptyToNull(p.url);
+  if (p.status !== undefined) row.status = p.status;
+  if (p.notes !== undefined) row.notes = emptyToNull(p.notes);
+  if (p.tags !== undefined) row.tags = p.tags;
+  return row;
+};
