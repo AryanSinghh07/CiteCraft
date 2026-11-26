@@ -20,6 +20,8 @@ const PublicProfile = lazy(() => import('@/pages/PublicProfile'));
 const CV = lazy(() => import('@/pages/CV'));
 const NotFound = lazy(() => import('@/pages/NotFound'));
 const Summarize = lazy(() => import('@/pages/Summarize'));
+const ReadingList = lazy(() => import('@/pages/ReadingList'));
+const Cite = lazy(() => import('@/pages/Cite'));
 const AssistantWidget = lazy(() => import('@/features/assistant/components/AssistantWidget'));
 
 /** Scrolls to the top on navigation (but keeps #anchor jumps working). */
@@ -47,6 +49,7 @@ const AppRoutes = () => {
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/u/:slug" element={<PublicProfile />} />
+            <Route path="/cite" element={<Cite />} />
 
             {/* Only when signed out */}
             <Route element={<GuestRoute />}>
@@ -61,6 +64,7 @@ const AppRoutes = () => {
               <Route path="/summary" element={<Summary />} />
               <Route path="/cv" element={<CV />} />
               <Route path="/summarize" element={<Summarize />} />
+              <Route path="/reading-list" element={<ReadingList />} />
               <Route path="/support" element={<Support />} />
               <Route path="/support/:ticketId" element={<SupportTicket />} />
 
