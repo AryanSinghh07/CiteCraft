@@ -1,16 +1,15 @@
-import { lazy, Suspense } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CalendarDays, ClipboardList, GraduationCap, School, Timer, UserCheck } from 'lucide-react';
-
-const TimetableTab = lazy(() => import('@/features/student/components/TimetableTab'));
-const TasksTab = lazy(() => import('@/features/student/components/TasksTab'));
-const AttendanceTab = lazy(() => import('@/features/student/components/AttendanceTab'));
-const GradesTab = lazy(() => import('@/features/student/components/GradesTab'));
-const FocusTimer = lazy(() => import('@/features/student/components/FocusTimer'));
+import TimetableTab from '@/features/student/components/TimetableTab';
+import TasksTab from '@/features/student/components/TasksTab';
+import AttendanceTab from '@/features/student/components/AttendanceTab';
+import GradesTab from '@/features/student/components/GradesTab';
+import FocusTimer from '@/features/student/components/FocusTimer';
+import SetupNotice from '@/components/common/SetupNotice';
+import { useClassSessions, useCourses, useGrades, useTasks } from '@/features/student/hooks';
 
 const TABS = [
   { value: 'timetable', label: 'Timetable', icon: CalendarDays },
@@ -25,6 +24,9 @@ type Tab = (typeof TABS)[number]['value'];
 const College = () => {
   const [params, setParams] = useSearchParams();
   const tab = (TABS.some(t => t.value === params.get('tab')) ? params.get('tab') : 'timetable') as Tab;
+  // Load every tab's data at once, in parallel, so switching tabs is instant.
+  const loads = [useCourses(), useClassSessions(), useTasks(), useGrades()];
+  const setupError = loads.find(l => l.error)?.error;
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -38,6 +40,12 @@ const College = () => {
             <p className="text-muted-foreground">Your timetable, deadlines, attendance and grades — all in one place.</p>
           </header>
 
+          {setupError && (
+            <div className="mb-6">
+              <SetupNotice error={setupError} feature="College tools" migration="0007_student_tools.sql" />
+            </div>
+          )}
+
           <Tabs value={tab} onValueChange={v => setParams({ tab: v }, { replace: true })}>
             <TabsList className="h-auto w-full justify-start gap-1 overflow-x-auto rounded-xl bg-muted/70 p-1 sm:w-auto">
               {TABS.map(t => (
@@ -48,25 +56,23 @@ const College = () => {
               ))}
             </TabsList>
 
-            <Suspense fallback={<Skeleton className="mt-6 h-80 rounded-xl" />}>
-              <TabsContent value="timetable" className="pt-6">
-                <TimetableTab />
-              </TabsContent>
-              <TabsContent value="tasks" className="pt-6">
-                <TasksTab />
-              </TabsContent>
-              <TabsContent value="attendance" className="pt-6">
-                <AttendanceTab />
-              </TabsContent>
-              <TabsContent value="grades" className="pt-6">
-                <GradesTab />
-              </TabsContent>
-              <TabsContent value="focus" className="pt-6">
-                <div className="mx-auto max-w-md rounded-2xl border bg-card p-8 shadow-sm">
-                  <FocusTimer />
-                </div>
-              </TabsContent>
-            </Suspense>
+            <TabsContent value="timetable" className="pt-6">
+              <TimetableTab />
+            </TabsContent>
+            <TabsContent value="tasks" className="pt-6">
+              <TasksTab />
+            </TabsContent>
+            <TabsContent value="attendance" className="pt-6">
+              <AttendanceTab />
+            </TabsContent>
+            <TabsContent value="grades" className="pt-6">
+              <GradesTab />
+            </TabsContent>
+            <TabsContent value="focus" className="pt-6">
+              <div className="mx-auto max-w-md rounded-2xl border bg-card p-8 shadow-sm">
+                <FocusTimer />
+              </div>
+            </TabsContent>
           </Tabs>
         </div>
       </main>
