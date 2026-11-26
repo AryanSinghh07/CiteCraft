@@ -14,13 +14,17 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { FileUp, Loader2, FileText, Trash2, ExternalLink, Sparkles } from 'lucide-react';
+import { FileUp, Loader2, FileText, Trash2, Eye, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { MAX_DOCUMENT_BYTES } from '@/services';
 import type { DocumentRecord } from '@/types';
+import { ACCEPTED_EXTENSIONS } from '@/features/summarizer/utils/readDocument';
 import { useDocuments } from '../hooks/useDocuments';
+import { DocumentViewer, type ViewerSource } from './DocumentViewer';
+import { KIND_LABEL, viewerKind } from '../utils/viewerKind';
 
-const ACCEPT = '.txt,.pdf,.docx,.pptx';
+// Any file can be stored; these are the types the viewer and summarizer understand.
+const ACCEPT = `${ACCEPTED_EXTENSIONS},.svg,.mp4,.webm,.mov,.mp3,.wav,.m4a,.ogg`;
 
 const formatSize = (bytes: number) =>
   bytes < 1024 * 1024 ? `${(bytes / 1024).toFixed(1)} KB` : `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
@@ -30,9 +34,10 @@ const errorMessage = (error: unknown) => (error instanceof Error ? error.message
 export const DocumentUpload = () => {
   const [file, setFile] = useState<File | null>(null);
   const [pendingDelete, setPendingDelete] = useState<DocumentRecord | null>(null);
+  const [viewing, setViewing] = useState<ViewerSource | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
-  const { documents, isLoading, upload, remove, open } = useDocuments();
+  const { documents, isLoading, upload, remove, load } = useDocuments();
   const navigate = useNavigate();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -61,13 +66,8 @@ export const DocumentUpload = () => {
     }
   };
 
-  const handleOpen = async (doc: DocumentRecord) => {
-    try {
-      await open(doc);
-    } catch (error) {
-      toast({ title: 'Could not open file', description: errorMessage(error), variant: 'destructive' });
-    }
-  };
+  const handleView = (doc: DocumentRecord) =>
+    setViewing({ name: doc.name, mimeType: doc.mimeType, size: doc.size, load: () => load(doc) });
 
   const confirmDelete = async () => {
     if (!pendingDelete) return;
@@ -104,7 +104,7 @@ export const DocumentUpload = () => {
               onChange={handleFileChange}
               className="cursor-pointer"
             />
-            <p className="text-xs text-muted-foreground">TXT, PDF, DOCX or PPTX · up to 10 MB</p>
+            <p className="text-xs text-muted-foreground">PDF, Word, PowerPoint, Excel, images, text, code, audio, video and more · up to 10 MB</p>
           </div>
 
           {file && (
@@ -154,12 +154,17 @@ export const DocumentUpload = () => {
               {documents.map(doc => (
                 <li key={doc.id} className="flex items-center gap-3 py-3 animate-fade-in">
                   <FileText className="h-5 w-5 text-primary shrink-0" />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium truncate">{doc.name}</p>
+                  <button
+                    type="button"
+                    className="min-w-0 flex-1 rounded text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    onClick={() => handleView(doc)}
+                    title={`View ${doc.name}`}
+                  >
+                    <p className="text-sm font-medium truncate hover:text-primary hover:underline">{doc.name}</p>
                     <p className="text-xs text-muted-foreground">
-                      {formatSize(doc.size)} · {new Date(doc.createdAt).toLocaleDateString()}
+                      {KIND_LABEL[viewerKind(doc.name, doc.mimeType)]} · {formatSize(doc.size)} · {new Date(doc.createdAt).toLocaleDateString()}
                     </p>
-                  </div>
+                  </button>
                   <Button
                     variant="ghost"
                     size="icon"
@@ -169,8 +174,8 @@ export const DocumentUpload = () => {
                   >
                     <Sparkles className="h-4 w-4 text-primary" />
                   </Button>
-                  <Button variant="ghost" size="icon" onClick={() => handleOpen(doc)} aria-label={`Open ${doc.name}`}>
-                    <ExternalLink className="h-4 w-4" />
+                  <Button variant="ghost" size="icon" onClick={() => handleView(doc)} aria-label={`View ${doc.name}`} title="View">
+                    <Eye className="h-4 w-4" />
                   </Button>
                   <Button
                     variant="ghost"
@@ -187,6 +192,15 @@ export const DocumentUpload = () => {
           )}
         </CardContent>
       </Card>
+
+      <DocumentViewer
+        source={viewing}
+        onClose={() => setViewing(null)}
+        onSummarize={picked => {
+          setViewing(null);
+          navigate('/summarize', { state: { file: picked } });
+        }}
+      />
 
       <AlertDialog open={Boolean(pendingDelete)} onOpenChange={isOpen => !isOpen && setPendingDelete(null)}>
         <AlertDialogContent>
