@@ -106,6 +106,24 @@ export const supabaseAi: AiService = {
     return (data ?? []).map(fromRow);
   },
 
+  async saveSummary(userId, r) {
+    const { data, error } = await requireSupabase()
+      .from('document_summaries')
+      .insert({
+        user_id: userId,
+        file_name: r.fileName,
+        mime_type: r.mimeType,
+        size_bytes: r.sizeBytes,
+        length: r.length,
+        focus: r.focus,
+        summary: r.summary,
+      })
+      .select('*')
+      .single<SummaryRow>();
+    if (error) throw new Error(error.message);
+    return fromRow(data);
+  },
+
   async deleteSummary(userId, id) {
     const { error } = await requireSupabase().from('document_summaries').delete().eq('id', id).eq('user_id', userId);
     if (error) throw new Error(error.message);
