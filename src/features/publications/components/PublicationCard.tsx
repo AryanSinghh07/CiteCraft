@@ -49,7 +49,7 @@ const PublicationCard = ({ publication, onEdit, onDelete }: PublicationCardProps
   };
 
   return (
-    <Card className="overflow-hidden transition-all duration-300 hover:shadow-md glass-card">
+    <Card className="h-full overflow-hidden glass-card hover-lift">
       <CardHeader className="pb-2">
         <div className="flex gap-2 flex-wrap">
           <Badge variant="outline" className="font-normal">
