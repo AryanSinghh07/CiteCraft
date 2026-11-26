@@ -8,9 +8,12 @@ import { useToast } from '@/hooks/use-toast';
 import { ArrowRight, Briefcase, GraduationCap, Loader2, MailCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { AccountType } from '@/types';
+import { MIN_PASSWORD_LENGTH, passwordStrength } from '@/features/security/passwordStrength';
+import PasswordStrengthMeter from '@/features/security/PasswordStrengthMeter';
+import { securityService } from '@/services';
 import { useAuth } from '../hooks/useAuth';
 
-export const MIN_PASSWORD_LENGTH = 8;
+export { MIN_PASSWORD_LENGTH } from '@/features/security/passwordStrength';
 
 const SignupForm = () => {
   const [searchParams] = useSearchParams();
@@ -29,8 +32,9 @@ const SignupForm = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password.length < MIN_PASSWORD_LENGTH) {
-      toast({ title: 'Password too short', description: `Use at least ${MIN_PASSWORD_LENGTH} characters.`, variant: 'destructive' });
+    const strength = passwordStrength(password, [email, name]);
+    if (!strength.acceptable) {
+      toast({ title: 'Choose a stronger password', description: strength.tips[0] ?? `Use at least ${MIN_PASSWORD_LENGTH} characters.`, variant: 'destructive' });
       return;
     }
     if (password !== confirm) {
@@ -42,6 +46,7 @@ const SignupForm = () => {
     try {
       const { signedIn } = await signUp({ name, email, password, accountType });
       if (signedIn) {
+        void securityService.recordPasswordStrength(passwordStrength(password, [email, name]).score).catch(() => undefined);
         toast({ title: 'Account created', description: 'Welcome to CiteCraft! Complete your profile to get started.' });
         navigate('/profile', { replace: true });
       } else {
@@ -155,7 +160,11 @@ const SignupForm = () => {
               />
             </div>
           </div>
-          <p className="text-xs text-muted-foreground">At least {MIN_PASSWORD_LENGTH} characters.</p>
+          {password ? (
+            <PasswordStrengthMeter password={password} context={[email, name]} />
+          ) : (
+            <p className="text-xs text-muted-foreground">At least {MIN_PASSWORD_LENGTH} characters — longer is stronger.</p>
+          )}
 
           <Button type="submit" className="w-full button-hover" disabled={isLoading}>
             {isLoading ? (
