@@ -1,12 +1,13 @@
 import type {
-  AssistantReply,
+  AccountType,
   AuthUser,
-  ChatMessage,
   DocumentRecord,
   Profile,
   Publication,
   PublicationInput,
   PublicProfileData,
+  ReadingItem,
+  ReadingItemInput,
   StaffMember,
   SummaryOptions,
   SummaryRecord,
@@ -28,6 +29,7 @@ export interface SignUpParams {
   name: string;
   email: string;
   password: string;
+  accountType: AccountType;
 }
 
 export interface SignUpResult {
@@ -108,6 +110,13 @@ export interface TicketService {
   listStaff(): Promise<StaffMember[]>;
 }
 
+export interface ReadingListService {
+  list(userId: string): Promise<ReadingItem[]>;
+  add(userId: string, input: ReadingItemInput): Promise<ReadingItem>;
+  update(userId: string, id: string, patch: Partial<ReadingItemInput>): Promise<ReadingItem>;
+  remove(userId: string, id: string): Promise<void>;
+}
+
 export interface SummarizeRequest {
   fileName: string;
   mimeType: string;
@@ -116,11 +125,10 @@ export interface SummarizeRequest {
   options: SummaryOptions;
 }
 
-/** AI assistant and summarizer (run on the server; not available in demo mode). */
+/** AI document summarizer (runs on the server; not available in demo mode). */
 export interface AiService {
   /** false when AI needs a backend that isn't configured */
   available: boolean;
-  chat(messages: ChatMessage[]): Promise<AssistantReply>;
   /** Streams the summary text through onText; resolves with the saved summary id. */
   summarize(request: SummarizeRequest, onText: (chunk: string) => void, signal?: AbortSignal): Promise<{ id: string | null; truncated: boolean }>;
   listSummaries(userId: string): Promise<SummaryRecord[]>;
@@ -134,6 +142,7 @@ export interface Backend {
   documents: DocumentService;
   tickets: TicketService;
   ai: AiService;
+  readingList: ReadingListService;
 }
 
 export const MAX_DOCUMENT_BYTES = 10 * 1024 * 1024; // 10 MB
