@@ -1,20 +1,25 @@
 
-import { useState } from 'react';
-import { Publication, PublicationSummary as Summary } from '@/utils/types';
+import { useMemo, useState } from 'react';
+import type { Publication } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { FileText, Download, Printer } from 'lucide-react';
-import { generatePublicationSummary } from '@/utils/publicationData';
+import { generatePublicationSummary } from '@/utils/summary';
 
 interface PublicationSummaryProps {
   publications: Publication[];
+  /** the profile owner's name, excluded from co-author stats */
+  ownerName?: string;
 }
 
-const PublicationSummary = ({ publications }: PublicationSummaryProps) => {
-  const [summary] = useState<Summary>(generatePublicationSummary(publications));
+const PublicationSummary = ({ publications, ownerName }: PublicationSummaryProps) => {
+  const summary = useMemo(
+    () => generatePublicationSummary(publications, ownerName),
+    [publications, ownerName],
+  );
   const [activeTab, setActiveTab] = useState('overview');
 
   const COLORS = ['#4285F4', '#34A853', '#FBBC05', '#EA4335', '#8AB4F8'];
