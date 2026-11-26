@@ -1,16 +1,22 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowRight, Loader2, MailCheck } from 'lucide-react';
+import { ArrowRight, Briefcase, GraduationCap, Loader2, MailCheck } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import type { AccountType } from '@/types';
 import { useAuth } from '../hooks/useAuth';
 
 export const MIN_PASSWORD_LENGTH = 8;
 
 const SignupForm = () => {
+  const [searchParams] = useSearchParams();
+  const [accountType, setAccountType] = useState<AccountType>(
+    searchParams.get('type') === 'student' ? 'student' : 'researcher',
+  );
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -34,7 +40,7 @@ const SignupForm = () => {
 
     setIsLoading(true);
     try {
-      const { signedIn } = await signUp({ name, email, password });
+      const { signedIn } = await signUp({ name, email, password, accountType });
       if (signedIn) {
         toast({ title: 'Account created', description: 'Welcome to CiteCraft! Complete your profile to get started.' });
         navigate('/profile', { replace: true });
@@ -79,6 +85,35 @@ const SignupForm = () => {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
+          <fieldset className="space-y-2">
+            <legend className="text-sm font-medium mb-2">I am a…</legend>
+            <div className="grid grid-cols-2 gap-3" role="radiogroup">
+              {(
+                [
+                  { value: 'student', label: 'Student', hint: 'UG, PG or PhD', icon: GraduationCap },
+                  { value: 'researcher', label: 'Researcher', hint: 'Faculty or staff', icon: Briefcase },
+                ] as const
+              ).map(option => (
+                <button
+                  key={option.value}
+                  type="button"
+                  role="radio"
+                  aria-checked={accountType === option.value}
+                  onClick={() => setAccountType(option.value)}
+                  className={cn(
+                    'flex flex-col items-center gap-1 rounded-xl border-2 p-3 text-center transition-all',
+                    accountType === option.value
+                      ? 'border-primary bg-primary/5 shadow-sm'
+                      : 'border-border hover:border-primary/40',
+                  )}
+                >
+                  <option.icon className={cn('h-6 w-6', accountType === option.value ? 'text-primary' : 'text-muted-foreground')} />
+                  <span className="text-sm font-medium">{option.label}</span>
+                  <span className="text-[11px] text-muted-foreground">{option.hint}</span>
+                </button>
+              ))}
+            </div>
+          </fieldset>
           <div className="space-y-2">
             <Label htmlFor="name">Full name</Label>
             <Input id="name" value={name} onChange={e => setName(e.target.value)} autoComplete="name" required />
@@ -88,7 +123,7 @@ const SignupForm = () => {
             <Input
               id="email"
               type="email"
-              placeholder="you@university.edu"
+              placeholder={accountType === 'student' ? 'you@student.university.edu' : 'you@university.edu'}
               value={email}
               onChange={e => setEmail(e.target.value)}
               autoComplete="email"
