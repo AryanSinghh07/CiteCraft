@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { Publication } from '@/utils/types';
+import type { Publication } from '@/types';
 import PublicationCard from './PublicationCard';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -12,10 +12,11 @@ import PublicationForm from './PublicationForm';
 
 interface PublicationListProps {
   publications: Publication[];
-  onUpdate: (publications: Publication[]) => void;
+  onUpdate: (publication: Publication) => Promise<void>;
+  onDelete: (id: string) => Promise<void>;
 }
 
-const PublicationList = ({ publications, onUpdate }: PublicationListProps) => {
+const PublicationList = ({ publications, onUpdate, onDelete }: PublicationListProps) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<string>('year');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
@@ -24,6 +25,7 @@ const PublicationList = ({ publications, onUpdate }: PublicationListProps) => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const handleSortOrderToggle = () => {
     setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
@@ -39,21 +41,24 @@ const PublicationList = ({ publications, onUpdate }: PublicationListProps) => {
     setIsDeleteDialogOpen(true);
   };
 
-  const confirmDelete = () => {
-    if (deleteId) {
-      const updatedPublications = publications.filter(pub => pub.id !== deleteId);
-      onUpdate(updatedPublications);
-      setIsDeleteDialogOpen(false);
-    }
+  const confirmDelete = async () => {
+    if (!deleteId) return;
+    setIsDeleteDialogOpen(false);
+    await onDelete(deleteId);
+    setDeleteId(null);
   };
 
-  const handlePublicationUpdate = (updatedPublication: Publication) => {
-    const updatedPublications = publications.map(pub => 
-      pub.id === updatedPublication.id ? updatedPublication : pub
-    );
-    onUpdate(updatedPublications);
-    setIsEditDialogOpen(false);
-    setEditingPublication(null);
+  const handlePublicationUpdate = async (updatedPublication: Publication) => {
+    setIsSaving(true);
+    try {
+      await onUpdate(updatedPublication);
+      setIsEditDialogOpen(false);
+      setEditingPublication(null);
+    } catch {
+      // the caller shows the error; keep the dialog open so nothing is lost
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   // Filter and sort publications
@@ -144,7 +149,11 @@ const PublicationList = ({ publications, onUpdate }: PublicationListProps) => {
       
       {displayedPublications.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-muted-foreground">No publications found matching your criteria.</p>
+          <p className="text-muted-foreground">
+            {publications.length === 0
+              ? 'No publications yet. Click "Add Publication" to add your first one.'
+              : 'No publications found matching your criteria.'}
+          </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -170,6 +179,7 @@ const PublicationList = ({ publications, onUpdate }: PublicationListProps) => {
               initialData={editingPublication} 
               onSubmit={handlePublicationUpdate} 
               onCancel={() => setIsEditDialogOpen(false)} 
+              isSubmitting={isSaving}
             />
           )}
         </DialogContent>
