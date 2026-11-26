@@ -12,13 +12,18 @@ interface Step {
 
 /** Profile completeness ring with a checklist of what's left. */
 const ProfileStrength = ({ profile, publicationCount }: { profile: Profile | null; publicationCount: number }) => {
+  const isStudent = profile?.accountType === 'student';
   const steps: Step[] = [
-    { label: 'Add your position and affiliation', done: Boolean(profile?.position && profile?.affiliation), to: '/profile' },
+    isStudent
+      ? { label: 'Add your program and university', done: Boolean(profile?.program && profile?.affiliation), to: '/profile' }
+      : { label: 'Add your position and affiliation', done: Boolean(profile?.position && profile?.affiliation), to: '/profile' },
     { label: 'Upload a profile photo', done: Boolean(profile?.photoUrl), to: '/profile' },
     { label: 'Write a short bio', done: Boolean(profile?.bio?.trim()), to: '/profile' },
     { label: 'List your research interests', done: Boolean(profile?.researchInterests?.length), to: '/profile' },
-    { label: 'Link ORCID or Google Scholar', done: Boolean(profile?.orcid || profile?.googleScholar), to: '/profile' },
-    { label: 'Add your first publication', done: publicationCount > 0, to: '/dashboard' },
+    isStudent
+      ? { label: 'Add a link (website, GitHub, ORCID)', done: Boolean(profile?.website || profile?.orcid || profile?.googleScholar), to: '/profile' }
+      : { label: 'Link ORCID or Google Scholar', done: Boolean(profile?.orcid || profile?.googleScholar), to: '/profile' },
+    { label: isStudent ? 'Add a project, thesis or paper' : 'Add your first publication', done: publicationCount > 0, to: '/dashboard' },
     { label: 'Publish your public profile', done: Boolean(profile?.isPublic && profile.publicSlug), to: '/profile' },
   ];
   const done = steps.filter(s => s.done).length;
