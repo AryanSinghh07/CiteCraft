@@ -6,6 +6,8 @@ import { localPublications } from './publications';
 import { localTickets } from './tickets';
 import { localAi } from './ai';
 import { localReadingList } from './readingList';
+import { localStudent } from './student';
+import { localSecurity } from './security';
 
 /** Demo-mode backend: everything is stored in this browser. */
 export const localBackend: Backend = {
@@ -16,4 +18,6 @@ export const localBackend: Backend = {
   tickets: localTickets,
   ai: localAi,
   readingList: localReadingList,
+  student: localStudent,
+  security: localSecurity,
 };
