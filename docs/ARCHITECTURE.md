@@ -49,7 +49,7 @@ CiteCraft/
 │   │   ├── assistant/         scripted chat: widget, knowledge base, conversation engine
 │   │   ├── auth/              context, hooks, LoginForm, SignupForm, ProtectedRoute
 │   │   ├── dashboard/         dashboard sidebar cards (profile strength)
-│   │   ├── documents/         DocumentUpload + useDocuments
+│   │   ├── documents/         DocumentUpload, DocumentViewer, useDocuments
 │   │   ├── profile/           useUpdateProfile
 │   │   ├── publications/      list, card, form, insights, work types + usePublications
 │   │   ├── readingList/       reading list hook + helpers
@@ -143,8 +143,8 @@ Calculations live in `features/student/utils.ts`; data goes through one generic
 ### AI summary
 
 ```
- Browser                         Supabase Edge Function (Deno)              Anthropic
- Summarize page ──POST──▶ functions/summarize ──stream──▶ Claude
+ Browser                         Supabase Edge Function (Deno)              AI provider
+ Summarize page ──POST──▶ functions/summarize ──stream──▶ language model
    reads the file:         · PDFs / images sent as-is
    PDF/images → base64     · text documents as a text block
    Office/ODF → JSZip text · streams NDJSON back, saves to document_summaries
@@ -153,6 +153,33 @@ Calculations live in `features/student/utils.ts`; data goes through one generic
 - Summaries (and assistant replies) are rendered by `components/common/Markdown.tsx`, which builds React
   elements (never raw HTML) and drops non-http links.
 - Demo mode has no server, so `services/local/ai.ts` explains how to enable the summarizer.
+
+## Document viewer
+
+`features/documents/components/DocumentViewer.tsx` previews any stored file in a dialog, entirely in the
+browser. `features/documents/utils/viewerKind.ts` picks how to show it from the file name and type:
+
+| Kind | Shown as |
+|---|---|
+| PDF | every page drawn with PDF.js on demand as you scroll, with zoom |
+| Word / OpenDocument text | text extracted with JSZip |
+| PowerPoint / OpenDocument slides | one card per slide |
+| Excel / OpenDocument sheets, CSV / TSV | tables (first 1,000 rows) |
+| Images, audio, video | native browser elements from an in-memory `blob:` URL |
+| Markdown, notebooks | rendered with `components/common/Markdown.tsx` |
+| Text and code | monospace with line numbers |
+| HTML | text-only reading view — the page's scripts never run |
+
+It is used by the document library, the Summarize page and support-ticket attachments. Files are fetched
+only when the viewer opens, and anything it can't show gets a download button.
+
+## Deployment
+
+- **Netlify** builds `main` (`netlify.toml` holds the SPA redirect and security headers).
+- **Docker**: `Dockerfile` builds the site and serves it with nginx (`docker/nginx.conf`, same headers).
+- **CI** (`.github/workflows/ci.yml`): type check and build on every push and pull request.
+- **Releases** (`.github/workflows/release.yml`): pushing a tag like `v2.1.0` publishes a GitHub Release with
+  notes from `docs/releases/<tag>.md` and the built site, plus the image `ghcr.io/aryansinghh07/citecraft`.
 
 ## UI & performance
 
