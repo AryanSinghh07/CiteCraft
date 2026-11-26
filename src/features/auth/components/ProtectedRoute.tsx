@@ -12,6 +12,14 @@ const ProtectedRoute = () => {
   return <Outlet />;
 };
 
+/** Admin-only pages. Must be nested inside ProtectedRoute. */
+export const AdminRoute = () => {
+  const { isAdmin, profile } = useAuth();
+  if (!profile) return <LoadingScreen />;
+  if (!isAdmin) return <Navigate to="/support" replace />;
+  return <Outlet />;
+};
+
 /** For /login and /signup: signed-in users go straight to the dashboard. */
 export const GuestRoute = () => {
   const { user, loading } = useAuth();
