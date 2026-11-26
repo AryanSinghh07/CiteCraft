@@ -1,11 +1,16 @@
 import type {
+  AssistantReply,
   AuthUser,
+  ChatMessage,
   DocumentRecord,
   Profile,
   Publication,
   PublicationInput,
   PublicProfileData,
   StaffMember,
+  SummaryOptions,
+  SummaryRecord,
+  SummarySource,
   Ticket,
   TicketAttachment,
   TicketInput,
@@ -103,12 +108,32 @@ export interface TicketService {
   listStaff(): Promise<StaffMember[]>;
 }
 
+export interface SummarizeRequest {
+  fileName: string;
+  mimeType: string;
+  sizeBytes: number;
+  source: SummarySource;
+  options: SummaryOptions;
+}
+
+/** AI assistant and summarizer (run on the server; not available in demo mode). */
+export interface AiService {
+  /** false when AI needs a backend that isn't configured */
+  available: boolean;
+  chat(messages: ChatMessage[]): Promise<AssistantReply>;
+  /** Streams the summary text through onText; resolves with the saved summary id. */
+  summarize(request: SummarizeRequest, onText: (chunk: string) => void, signal?: AbortSignal): Promise<{ id: string | null; truncated: boolean }>;
+  listSummaries(userId: string): Promise<SummaryRecord[]>;
+  deleteSummary(userId: string, id: string): Promise<void>;
+}
+
 export interface Backend {
   auth: AuthService;
   profiles: ProfileService;
   publications: PublicationService;
   documents: DocumentService;
   tickets: TicketService;
+  ai: AiService;
 }
 
 export const MAX_DOCUMENT_BYTES = 10 * 1024 * 1024; // 10 MB
