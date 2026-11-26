@@ -179,3 +179,46 @@ export async function readDocument(file: File): Promise<SummarySource> {
   if (!text.trim()) throw new Error('No text was found in this file.');
   return { kind: 'text', text };
 }
+
+/** Text from a PDF, read in the browser with PDF.js (loaded only when needed). */
+async function pdfText(file: File): Promise<string> {
+  const [pdfjs, worker] = await Promise.all([import('pdfjs-dist'), import('pdfjs-dist/build/pdf.worker.min.mjs?url')]);
+  pdfjs.GlobalWorkerOptions.workerSrc = worker.default;
+  let doc;
+  try {
+    doc = await pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
+  } catch {
+    throw new Error('This PDF could not be opened. It may be corrupted or password-protected.');
+  }
+  const pages: string[] = [];
+  for (let i = 1; i <= doc.numPages; i++) {
+    const content = await (await doc.getPage(i)).getTextContent();
+    let page = '';
+    for (const item of content.items) {
+      if (!('str' in item)) continue;
+      page += item.str + (item.hasEOL ? '\n' : ' ');
+    }
+    pages.push(page);
+  }
+  await doc.destroy();
+  const text = pages.join('\n\n').replace(/[ \t]+/g, ' ').trim();
+  if (text.replace(/\s/g, '').length < 50) {
+    throw new Error('This PDF has no selectable text (it may be a scan). The AI summarizer can read scanned pages once it is set up.');
+  }
+  return text;
+}
+
+/** Plain text of any supported document, for the in-browser quick summary. Images aren't supported. */
+export async function readDocumentText(file: File): Promise<string> {
+  const ext = extensionOf(file.name);
+  if (ext === 'pdf' || file.type === 'application/pdf') {
+    if (file.size > MAX_SUMMARY_FILE_BYTES) throw new Error('Files must be 10 MB or smaller.');
+    return pdfText(file);
+  }
+  const source = await readDocument(file);
+  if (source.kind === 'image') {
+    throw new Error('Images need the AI summarizer, which isn’t set up yet. Try a PDF, Word, PowerPoint or text file.');
+  }
+  if (source.kind !== 'text') throw new Error('Unsupported file.');
+  return source.text;
+}
