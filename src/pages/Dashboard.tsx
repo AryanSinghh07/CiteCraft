@@ -15,6 +15,7 @@ import DocumentUpload from '@/features/documents/components/DocumentUpload';
 import ImportDialog from '@/features/publications/components/ImportDialog';
 import ExportMenu from '@/features/publications/components/ExportMenu';
 import ProfileStrength from '@/features/dashboard/components/ProfileStrength';
+import { PUBLICATION_TYPES } from '@/features/publications/utils/publicationTypes';
 import { usePublications } from '@/features/publications/hooks/usePublications';
 import { useDocuments } from '@/features/documents/hooks/useDocuments';
 import { useAuth } from '@/features/auth/hooks/useAuth';
@@ -26,6 +27,7 @@ import {
   Award,
   BarChart3,
   Book,
+  BookMarked,
   Clock,
   FileText,
   Info,
@@ -44,7 +46,6 @@ const greeting = () => {
   return hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
 };
 
-const TYPE_LABEL = { journal: 'Journal', conference: 'Conference', book: 'Book', chapter: 'Chapter', other: 'Other' };
 
 const Dashboard = () => {
   const { profile, mode } = useAuth();
@@ -104,6 +105,8 @@ const Dashboard = () => {
   };
 
   const firstName = profile?.name?.split(' ')[0];
+  const isStudent = profile?.accountType === 'student';
+  const workLabel = isStudent ? 'My work' : 'Publications';
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -136,13 +139,18 @@ const Dashboard = () => {
                   <p className="text-sm text-muted-foreground">{greeting()}</p>
                   <h1 className="text-2xl sm:text-3xl font-bold truncate">{firstName ? `${firstName}, welcome back` : 'Welcome back'}</h1>
                   <p className="text-sm text-muted-foreground truncate">
-                    {[profile?.position, profile?.affiliation].filter(Boolean).join(' · ') || 'Complete your profile to get started'}
+                    {(isStudent
+                      ? [profile?.program, profile?.yearOfStudy, profile?.affiliation]
+                      : [profile?.position, profile?.affiliation]
+                    )
+                      .filter(Boolean)
+                      .join(' · ') || 'Complete your profile to get started'}
                   </p>
                 </div>
               </div>
               <div className="flex flex-wrap gap-2">
                 <Button onClick={() => setIsAddDialogOpen(true)} className="shadow-md shadow-primary/20">
-                  <Plus className="mr-2 h-4 w-4" /> Add publication
+                  <Plus className="mr-2 h-4 w-4" /> {isStudent ? 'Add work' : 'Add publication'}
                 </Button>
                 <Button variant="outline" onClick={() => setIsImportOpen(true)} className="bg-background/60">
                   <Upload className="mr-2 h-4 w-4" /> Import
@@ -155,7 +163,7 @@ const Dashboard = () => {
           {/* Stats */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             <StatCard
-              label="Publications"
+              label={workLabel}
               value={publications.length}
               icon={FileText}
               color="hsl(var(--chart-1))"
@@ -210,7 +218,7 @@ const Dashboard = () => {
             <Tabs value={activeTab} onValueChange={setActiveTab} className="min-w-0">
               <TabsList className="h-auto rounded-xl bg-muted/70 p-1">
                 <TabsTrigger value="publications" className="gap-2 rounded-lg px-4 py-2 data-[state=active]:shadow-sm">
-                  <Book className="h-4 w-4" /> Publications
+                  <Book className="h-4 w-4" /> {workLabel}
                   <span className="rounded-full bg-primary/10 px-1.5 text-xs text-primary">{publications.length}</span>
                 </TabsTrigger>
                 <TabsTrigger value="documents" className="gap-2 rounded-lg px-4 py-2 data-[state=active]:shadow-sm">
@@ -235,7 +243,9 @@ const Dashboard = () => {
                     </div>
                     <h2 className="text-lg font-semibold">Your library is empty</h2>
                     <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-                      Add a publication by DOI, import a BibTeX file, or ask the assistant (bottom-right) to add one for you.
+                      {isStudent
+                        ? 'Add your projects, theses, reports or papers — or ask the assistant (bottom-right) to help.'
+                        : 'Add a publication by DOI, import a BibTeX file, or ask the assistant (bottom-right) to add one for you.'}
                     </p>
                     <div className="mt-5 flex flex-wrap justify-center gap-2">
                       <Button onClick={() => setIsAddDialogOpen(true)}>
@@ -283,7 +293,7 @@ const Dashboard = () => {
                           <div className="min-w-0">
                             <p className="text-sm font-medium leading-snug line-clamp-2">{p.title}</p>
                             <p className="text-xs text-muted-foreground">
-                              {TYPE_LABEL[p.type]} · {p.year}
+                              {PUBLICATION_TYPES[p.type].short} · {p.year}
                               {(p.citations ?? 0) > 0 && ` · ${p.citations} citations`}
                             </p>
                           </div>
@@ -305,6 +315,22 @@ const Dashboard = () => {
                   <div className="flex-1">
                     <p className="font-medium">Research insights</p>
                     <p className="text-xs text-muted-foreground">Trends, venues, collaborators and topics</p>
+                  </div>
+                  <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-1" />
+                </div>
+              </Link>
+
+              <Link
+                to="/reading-list"
+                className="group block rounded-xl border bg-card p-5 hover-lift animate-fade-up [animation-delay:200ms]"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                    <BookMarked className="h-5 w-5" />
+                  </span>
+                  <div className="flex-1">
+                    <p className="font-medium">Reading list</p>
+                    <p className="text-xs text-muted-foreground">Papers you're reading, with notes and citations</p>
                   </div>
                   <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-1" />
                 </div>
