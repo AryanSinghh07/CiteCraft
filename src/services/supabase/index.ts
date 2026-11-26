@@ -5,6 +5,7 @@ import { supabaseProfiles } from './profiles';
 import { supabasePublications } from './publications';
 import { supabaseTickets } from './tickets';
 import { supabaseAi } from './ai';
+import { supabaseReadingList } from './readingList';
 
 /** Cloud backend: Supabase Auth + Postgres + Storage. */
 export const supabaseBackend: Backend = {
@@ -14,4 +15,5 @@ export const supabaseBackend: Backend = {
   documents: supabaseDocuments,
   tickets: supabaseTickets,
   ai: supabaseAi,
+  readingList: supabaseReadingList,
 };
