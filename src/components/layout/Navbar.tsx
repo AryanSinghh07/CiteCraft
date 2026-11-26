@@ -22,6 +22,7 @@ import {
   Menu,
   Printer,
   ShieldCheck,
+  Sparkles,
   User,
   X,
 } from 'lucide-react';
@@ -73,6 +74,7 @@ const Navbar = () => {
     ? [
         { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
         { to: '/summary', label: 'Summary', icon: BarChart3 },
+        { to: '/summarize', label: 'Summarize', icon: Sparkles },
         { to: '/support', label: 'Support', icon: LifeBuoy },
         ...(isAdmin ? [{ to: '/admin/tickets', label: 'Admin', icon: ShieldCheck }] : []),
       ]
