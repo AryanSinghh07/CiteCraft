@@ -19,6 +19,13 @@ export interface Profile {
   googleScholar?: string;
   website?: string;
   role?: UserRole;
+  accountType?: AccountType;
+  /** students: degree programme, e.g. "B.Tech Computer Science" */
+  program?: string;
+  /** students: e.g. "3rd year" */
+  yearOfStudy?: string;
+  /** students: supervisor or advisor */
+  supervisor?: string;
   /** show a shareable page at /u/<publicSlug> */
   isPublic?: boolean;
   publicSlug?: string;
@@ -33,7 +40,19 @@ export interface PublicProfileData {
 /** @deprecated use Profile */
 export type User = Profile;
 
-export type PublicationType = 'journal' | 'conference' | 'book' | 'chapter' | 'other';
+export type AccountType = 'researcher' | 'student';
+
+export type PublicationType =
+  | 'journal'
+  | 'conference'
+  | 'book'
+  | 'chapter'
+  | 'thesis'
+  | 'report'
+  | 'preprint'
+  | 'project'
+  | 'poster'
+  | 'other';
 
 export interface Publication {
   id: string;
@@ -42,6 +61,8 @@ export interface Publication {
   journal?: string;
   conference?: string;
   book?: string;
+  /** institution, repository, event or course for the other work types */
+  venue?: string;
   year: number;
   doi?: string;
   url?: string;
@@ -146,21 +167,6 @@ export interface StaffMember {
 
 // ------------------------------------------------------------------ AI features
 
-export interface ChatMessage {
-  role: 'user' | 'assistant';
-  content: string;
-}
-
-/** Something the assistant did on the user's behalf. */
-export type AssistantAction =
-  | { type: 'publication_added'; id: string; title: string }
-  | { type: 'ticket_created'; id: string; ticketNumber: number; subject: string };
-
-export interface AssistantReply {
-  reply: string;
-  actions: AssistantAction[];
-}
-
 export type SummaryLength = 'brief' | 'standard' | 'detailed';
 export type SummaryFocus = 'general' | 'key_findings' | 'methods' | 'literature' | 'action_items' | 'simple' | 'slides';
 
@@ -186,3 +192,24 @@ export interface SummaryRecord {
   summary: string;
   createdAt: string;
 }
+
+// ------------------------------------------------------------------ reading list
+
+export type ReadingStatus = 'to_read' | 'reading' | 'done';
+
+export interface ReadingItem {
+  id: string;
+  title: string;
+  authors: string[];
+  year?: number;
+  venue?: string;
+  doi?: string;
+  url?: string;
+  status: ReadingStatus;
+  notes?: string;
+  tags: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type ReadingItemInput = Omit<ReadingItem, 'id' | 'createdAt' | 'updatedAt'>;
