@@ -36,6 +36,7 @@ import {
 } from 'lucide-react';
 import ExportMenu from './ExportMenu';
 import CiteMenu from './CiteMenu';
+import { PUBLICATION_TYPES, PUBLICATION_TYPE_ORDER, venueOf } from '../utils/publicationTypes';
 
 interface PublicationSummaryProps {
   publications: Publication[];
@@ -45,13 +46,9 @@ interface PublicationSummaryProps {
 
 const C = (n: number) => `hsl(var(--chart-${n}))`;
 
-const TYPE_META: Record<PublicationType, { label: string; color: string }> = {
-  journal: { label: 'Journal articles', color: C(1) },
-  conference: { label: 'Conference papers', color: C(2) },
-  book: { label: 'Books', color: C(3) },
-  chapter: { label: 'Book chapters', color: C(4) },
-  other: { label: 'Other', color: C(5) },
-};
+const TYPE_META = Object.fromEntries(
+  PUBLICATION_TYPE_ORDER.map((type, i) => [type, { label: PUBLICATION_TYPES[type].plural, color: C((i % 6) + 1) }]),
+) as Record<PublicationType, { label: string; color: string }>;
 
 const tooltipStyle = {
   contentStyle: {
@@ -127,13 +124,13 @@ const PublicationSummary = ({ publications, ownerName }: PublicationSummaryProps
 
   const typeData = useMemo(
     () =>
-      (Object.keys(TYPE_META) as PublicationType[])
+      PUBLICATION_TYPE_ORDER
         .map(type => ({ type, ...TYPE_META[type], value: publications.filter(p => p.type === type).length }))
         .filter(d => d.value > 0),
     [publications],
   );
   const venues = useMemo(
-    () => rank(publications.map(p => p.journal || p.conference || p.book || ''), 6),
+    () => rank(publications.map(venueOf), 6),
     [publications],
   );
   const coAuthors = useMemo(
@@ -344,7 +341,7 @@ const PublicationSummary = ({ publications, ownerName }: PublicationSummaryProps
                   <div className="min-w-0 flex-1">
                     <p className="font-medium leading-snug">{p.title}</p>
                     <p className="text-xs text-muted-foreground truncate">
-                      {[p.journal || p.conference || p.book, p.year].filter(Boolean).join(' · ')}
+                      {[venueOf(p), p.year].filter(Boolean).join(' · ')}
                     </p>
                     <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-muted">
                       <div
