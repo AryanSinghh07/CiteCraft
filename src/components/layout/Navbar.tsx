@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import ThemeToggle from '@/components/common/ThemeToggle';
+import Logo from '@/components/common/Logo';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import {
@@ -107,9 +108,7 @@ const Navbar = () => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between gap-4">
           <Link to={user ? '/dashboard' : '/'} className="group flex items-center gap-2 text-xl font-semibold">
-            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm transition-transform duration-300 group-hover:rotate-[-8deg] group-hover:scale-105">
-              <Book className="h-5 w-5" />
-            </span>
+            <Logo size={36} className="transition-transform duration-300 group-hover:rotate-[-8deg] group-hover:scale-105" />
             <span>CiteCraft</span>
           </Link>
 
