@@ -1,4 +1,13 @@
-import type { DocumentRecord, Profile, Publication, PublicationInput } from '@/types';
+import type {
+  DocumentRecord,
+  Profile,
+  Publication,
+  PublicationInput,
+  Ticket,
+  TicketAttachment,
+  TicketMessage,
+  UserRole,
+} from '@/types';
 
 /** Row shapes in Postgres (snake_case) and conversions to app types (camelCase). */
 
@@ -15,6 +24,7 @@ export interface ProfileRow {
   orcid: string | null;
   google_scholar: string | null;
   website: string | null;
+  role?: UserRole;
 }
 
 export interface PublicationRow {
@@ -63,6 +73,7 @@ export const profileFromRow = (r: ProfileRow): Profile => ({
   orcid: orUndefined(r.orcid),
   googleScholar: orUndefined(r.google_scholar),
   website: orUndefined(r.website),
+  role: r.role ?? 'user',
 });
 
 export const profileToRow = (p: Partial<Omit<Profile, 'id'>>): Partial<ProfileRow> => {
@@ -120,6 +131,90 @@ export const documentFromRow = (r: DocumentRow): DocumentRecord => ({
   size: r.size_bytes,
   mimeType: r.mime_type,
   publicationId: r.publication_id,
+  storagePath: r.storage_path,
+  createdAt: r.created_at,
+});
+
+// ------------------------------------------------------------------ tickets
+
+export interface TicketRow {
+  id: string;
+  ticket_number: number;
+  user_id: string;
+  requester_name: string;
+  requester_email: string;
+  subject: string;
+  description: string;
+  category: Ticket['category'];
+  priority: Ticket['priority'];
+  status: Ticket['status'];
+  assigned_to: string | null;
+  rating: number | null;
+  created_at: string;
+  updated_at: string;
+  resolved_at: string | null;
+  closed_at: string | null;
+}
+
+export interface TicketMessageRow {
+  id: string;
+  ticket_id: string;
+  author_id: string;
+  author_name: string;
+  author_role: UserRole;
+  body: string;
+  is_internal: boolean;
+  created_at: string;
+}
+
+export interface TicketAttachmentRow {
+  id: string;
+  ticket_id: string;
+  message_id: string | null;
+  name: string;
+  size_bytes: number;
+  mime_type: string;
+  storage_path: string;
+  created_at: string;
+}
+
+export const ticketFromRow = (r: TicketRow): Ticket => ({
+  id: r.id,
+  ticketNumber: r.ticket_number,
+  userId: r.user_id,
+  requesterName: r.requester_name,
+  requesterEmail: r.requester_email,
+  subject: r.subject,
+  description: r.description,
+  category: r.category,
+  priority: r.priority,
+  status: r.status,
+  assignedTo: r.assigned_to,
+  rating: r.rating,
+  createdAt: r.created_at,
+  updatedAt: r.updated_at,
+  resolvedAt: r.resolved_at,
+  closedAt: r.closed_at,
+});
+
+export const ticketMessageFromRow = (r: TicketMessageRow): TicketMessage => ({
+  id: r.id,
+  ticketId: r.ticket_id,
+  authorId: r.author_id,
+  authorName: r.author_name,
+  authorRole: r.author_role,
+  body: r.body,
+  isInternal: r.is_internal,
+  createdAt: r.created_at,
+});
+
+export const ticketAttachmentFromRow = (r: TicketAttachmentRow): TicketAttachment => ({
+  id: r.id,
+  ticketId: r.ticket_id,
+  messageId: r.message_id,
+  name: r.name,
+  size: r.size_bytes,
+  mimeType: r.mime_type,
   storagePath: r.storage_path,
   createdAt: r.created_at,
 });
