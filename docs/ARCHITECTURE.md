@@ -35,7 +35,7 @@ CiteCraft/
 ├── docs/                      Setup and architecture docs
 ├── public/                    Static assets
 ├── supabase/
-│   ├── functions/             Edge Functions: assistant, summarize
+│   ├── functions/             Edge Function: summarize
 │   └── migrations/            SQL run in order on the database
 ├── src/
 │   ├── app/                   App root: providers + route table
@@ -46,12 +46,13 @@ CiteCraft/
 │   ├── config/                Environment configuration
 │   ├── data/                  Seed data for demo mode
 │   ├── features/              One folder per feature
-│   │   ├── assistant/         chat widget + useAssistant
+│   │   ├── assistant/         scripted chat: widget, knowledge base, conversation engine
 │   │   ├── auth/              context, hooks, LoginForm, SignupForm, ProtectedRoute
 │   │   ├── dashboard/         dashboard sidebar cards (profile strength)
 │   │   ├── documents/         DocumentUpload + useDocuments
 │   │   ├── profile/           useUpdateProfile
-│   │   ├── publications/      list, card, form, summary + usePublications
+│   │   ├── publications/      list, card, form, insights, work types + usePublications
+│   │   ├── readingList/       reading list hook + helpers
 │   │   ├── summarizer/        file reader (PDF, Office, text…) + useSummaries
 │   │   └── support/           ticket list, thread, reply box, admin controls, stats + useTickets
 │   ├── hooks/                 Generic hooks (toast, mobile)
@@ -68,26 +69,45 @@ CiteCraft/
 └── netlify.toml
 ```
 
-## AI features
+## Assistant (scripted)
+
+The chat assistant (`features/assistant`) is rule-based and runs entirely in the browser — no
+server, no AI, no cost, and it works in demo mode too.
+
+- `script/knowledge.ts` — how-to topics with keywords and Markdown answers. **Add a topic to
+  teach the bot something new.**
+- `hooks/useAssistant.ts` — intent matching and guided flows (a small state machine): add a
+  publication by DOI or step by step, add to the reading list, cite a DOI, show stats, search
+  your work and raise a support ticket. Every flow shows a summary and asks **Yes / No** before
+  saving, and "cancel" or "menu" resets it at any point. Saves go through the normal services,
+  so database rules apply.
+
+## Students
+
+- `profiles.account_type` is `student` or `researcher` (chosen at sign-up, editable on Profile),
+  with `program`, `year_of_study` and `supervisor` for students.
+- Work types are defined once in `features/publications/utils/publicationTypes.ts`: journal,
+  conference, book, chapter, **thesis, project, report, preprint, poster** and other. New types
+  store their institution / repository / event in `publications.venue`.
+- Students see "My work" wording, a student checklist, an Education section on the CV and
+  student details on their public profile.
+- `reading_list` table + `/reading-list` page: papers you read, with status and notes.
+- `/cite` — a public citation generator (APA, MLA, IEEE, Harvard, Chicago); recent citations
+  are kept in the visitor's browser only.
+
+## AI summarizer
 
 ```
  Browser                         Supabase Edge Function (Deno)              Anthropic
- AssistantWidget ──POST──▶ functions/assistant ──tool loop──▶ Claude
-   (user's JWT)            · checks the user (auth.getUser)      tools run here, as the user:
-                           · daily limit (ai_usage)               get_my_overview, search_my_publications,
-                           · Supabase client with user's token    lookup_doi (Crossref), add_publication,
-                             → RLS still applies                  raise_support_ticket
  Summarize page ──POST──▶ functions/summarize ──stream──▶ Claude
    reads the file:         · PDFs / images sent as-is
    PDF/images → base64     · text documents as a text block
    Office/ODF → JSZip text · streams NDJSON back, saves to document_summaries
 ```
 
-- The assistant must show what it will save and get the user's "yes" before adding a
-  publication or raising a ticket (system prompt), and can't edit or delete existing data.
-- Replies and summaries are rendered by `components/common/Markdown.tsx`, which builds React
+- Summaries (and assistant replies) are rendered by `components/common/Markdown.tsx`, which builds React
   elements (never raw HTML) and drops non-http links.
-- Demo mode has no server, so `services/local/ai.ts` explains how to enable the features.
+- Demo mode has no server, so `services/local/ai.ts` explains how to enable the summarizer.
 
 ## UI & performance
 
@@ -106,8 +126,9 @@ CiteCraft/
 | `/` | public |
 | `/login`, `/signup` | signed-out only |
 | `/forgot-password`, `/reset-password` | public |
+| `/cite` | public — free citation generator |
 | `/u/:slug` | public — opt-in profile page (read through `get_public_profile()`, never exposes email) |
-| `/dashboard`, `/profile`, `/summary`, `/cv`, `/summarize` | signed-in only (`ProtectedRoute`) |
+| `/dashboard`, `/profile`, `/summary`, `/cv`, `/summarize`, `/reading-list` | signed-in only (`ProtectedRoute`) |
 | `/support`, `/support/:ticketId` | signed-in only — raise and follow tickets |
 | `/admin/tickets` | admins only (`AdminRoute`) |
 
