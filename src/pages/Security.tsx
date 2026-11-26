@@ -23,6 +23,7 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import PasswordStrengthMeter from '@/features/security/PasswordStrengthMeter';
+import DeleteAccountCard from '@/features/security/DeleteAccountCard';
 import { passwordStrength } from '@/features/security/passwordStrength';
 import { securityLevel } from '@/features/security/level';
 import {
@@ -430,7 +431,11 @@ const Security = () => {
               </CardHeader>
               <CardContent>
                 <p className="mb-3 text-sm text-muted-foreground">
-                  Your data is private to your account. Download a copy of everything you’ve added (JSON).
+                  Your data is private to your account. Download a copy of everything you’ve added (JSON). See our{' '}
+                  <Link to="/privacy" className="text-primary hover:underline">
+                    privacy policy
+                  </Link>
+                  .
                 </p>
                 <Button variant="outline" onClick={downloadData} disabled={busy === 'export'}>
                   {busy === 'export' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
@@ -439,6 +444,8 @@ const Security = () => {
               </CardContent>
             </Card>
           </div>
+
+          <DeleteAccountCard />
         </div>
       </main>
 
