@@ -33,6 +33,8 @@ export const localProfiles: ProfileService = {
   async updateProfile(userId, patch) {
     await simulateLatency();
     const existing = readJson<Profile | null>(keys.profile(userId), null);
+    // Users can't change their own role (matches the database trigger).
+    const { role: _ignored, ...safePatch } = patch;
     const updated: Profile = {
       name: '',
       email: '',
@@ -40,7 +42,7 @@ export const localProfiles: ProfileService = {
       position: '',
       department: '',
       ...existing,
-      ...patch,
+      ...safePatch,
       id: userId,
     };
     writeJson(keys.profile(userId), updated);
