@@ -24,6 +24,7 @@ const ReadingList = lazy(() => import('@/pages/ReadingList'));
 const Cite = lazy(() => import('@/pages/Cite'));
 const College = lazy(() => import('@/pages/College'));
 const Security = lazy(() => import('@/pages/Security'));
+const Privacy = lazy(() => import('@/pages/Privacy'));
 const AssistantWidget = lazy(() => import('@/features/assistant/components/AssistantWidget'));
 
 /** Scrolls to the top on navigation (but keeps #anchor jumps working). */
@@ -52,6 +53,7 @@ const AppRoutes = () => {
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/u/:slug" element={<PublicProfile />} />
             <Route path="/cite" element={<Cite />} />
+            <Route path="/privacy" element={<Privacy />} />
 
             {/* Only when signed out */}
             <Route element={<GuestRoute />}>
