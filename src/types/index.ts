@@ -18,6 +18,7 @@ export interface Profile {
   orcid?: string;
   googleScholar?: string;
   website?: string;
+  role?: UserRole;
 }
 
 /** @deprecated use Profile */
@@ -68,4 +69,68 @@ export interface PublicationSummary {
   topJournals: Record<string, number>;
   topConferences: Record<string, number>;
   coAuthors: Record<string, number>;
+}
+
+// ------------------------------------------------------------------ support tickets
+
+export type UserRole = 'user' | 'admin';
+export type TicketStatus = 'open' | 'in_progress' | 'waiting_on_user' | 'resolved' | 'closed';
+export type TicketPriority = 'low' | 'medium' | 'high';
+export type TicketCategory = 'bug' | 'account' | 'publication' | 'feature' | 'other';
+
+export interface Ticket {
+  id: string;
+  ticketNumber: number;
+  userId: string;
+  requesterName: string;
+  requesterEmail: string;
+  subject: string;
+  description: string;
+  category: TicketCategory;
+  priority: TicketPriority;
+  status: TicketStatus;
+  assignedTo: string | null;
+  rating: number | null;
+  createdAt: string;
+  updatedAt: string;
+  resolvedAt: string | null;
+  closedAt: string | null;
+}
+
+export interface TicketInput {
+  subject: string;
+  description: string;
+  category: TicketCategory;
+  priority: TicketPriority;
+}
+
+/** Fields support staff can change; requesters may only set status (close/reopen) and rating. */
+export type TicketUpdate = Partial<Pick<Ticket, 'status' | 'priority' | 'category' | 'assignedTo' | 'rating'>>;
+
+export interface TicketMessage {
+  id: string;
+  ticketId: string;
+  authorId: string;
+  authorName: string;
+  authorRole: UserRole;
+  body: string;
+  isInternal: boolean;
+  createdAt: string;
+}
+
+export interface TicketAttachment {
+  id: string;
+  ticketId: string;
+  messageId: string | null;
+  name: string;
+  size: number;
+  mimeType: string;
+  storagePath: string;
+  createdAt: string;
+}
+
+export interface StaffMember {
+  id: string;
+  name: string;
+  email: string;
 }
