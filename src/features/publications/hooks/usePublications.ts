@@ -25,6 +25,11 @@ export function usePublications() {
     onSuccess: created => setList(list => [created, ...list]),
   });
 
+  const createMany = useMutation({
+    mutationFn: (inputs: PublicationInput[]) => publicationService.createMany(user!.id, inputs),
+    onSuccess: created => setList(list => [...created, ...list]),
+  });
+
   const update = useMutation({
     mutationFn: (publication: Publication) => publicationService.update(user!.id, publication),
     onSuccess: updated => setList(list => list.map(p => (p.id === updated.id ? updated : p))),
@@ -41,6 +46,7 @@ export function usePublications() {
     error: query.error as Error | null,
     refetch: query.refetch,
     create,
+    createMany,
     update,
     remove,
   };
