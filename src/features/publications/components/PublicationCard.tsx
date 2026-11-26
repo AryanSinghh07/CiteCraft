@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import CiteMenu from './CiteMenu';
+import { PUBLICATION_TYPES } from '../utils/publicationTypes';
 
 interface PublicationCardProps {
   publication: Publication;
@@ -38,15 +39,7 @@ const PublicationCard = ({ publication, onEdit, onDelete }: PublicationCardProps
     }
   };
 
-  const getPublicationType = (type: string) => {
-    switch (type) {
-      case 'journal': return 'Journal Article';
-      case 'conference': return 'Conference Paper';
-      case 'book': return 'Book';
-      case 'chapter': return 'Book Chapter';
-      default: return 'Other Publication';
-    }
-  };
+  const getPublicationType = (type: Publication['type']) => PUBLICATION_TYPES[type]?.label ?? 'Other';
 
   return (
     <Card className="h-full overflow-hidden glass-card hover-lift">
@@ -83,6 +76,13 @@ const PublicationCard = ({ publication, onEdit, onDelete }: PublicationCardProps
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Calendar size={16} />
             <p className="line-clamp-1">{publication.conference}</p>
+          </div>
+        )}
+
+        {(publication.book || publication.venue) && !publication.journal && !publication.conference && (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <BookOpen size={16} />
+            <p className="line-clamp-1">{publication.book || publication.venue}</p>
           </div>
         )}
         
