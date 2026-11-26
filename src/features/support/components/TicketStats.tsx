@@ -41,8 +41,8 @@ const TicketStats = ({ tickets }: { tickets: Ticket[] }) => {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 gap-4 lg:col-span-1">
-        {cards.map(card => (
-          <Card key={card.label} className="glass-card">
+        {cards.map((card, i) => (
+          <Card key={card.label} className="glass-card animate-fade-up" style={{ animationDelay: `${i * 60}ms` }}>
             <CardHeader className="p-4">
               <CardDescription className="text-xs">{card.label}</CardDescription>
               <CardTitle className={`text-2xl ${card.accent ? 'text-red-600 dark:text-red-400' : ''}`}>

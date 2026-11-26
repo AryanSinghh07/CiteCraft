@@ -64,6 +64,16 @@ CiteCraft/
 └── netlify.toml
 ```
 
+## UI & performance
+
+- **Theme:** `next-themes` with light / dark / system, saved as `citecraft-theme`. A tiny script in
+  `index.html` applies it before first paint so there is no flash.
+- **Animation helpers:** `AnimatedNumber` (count-up), `Reveal` (fade in on scroll) and the
+  `animate-page-in` / `animate-fade-up` Tailwind animations. All respect *reduce motion*.
+- **Code splitting:** every page except the landing page is `React.lazy` loaded. `vite.config.ts`
+  puts big libraries in their own chunks (`charts`, `supabase`, `query`, `vendor`), so the charts
+  library only downloads on pages that draw charts.
+
 ## Routes
 
 | Path | Access |
