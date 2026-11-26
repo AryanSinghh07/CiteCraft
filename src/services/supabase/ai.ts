@@ -64,7 +64,8 @@ export const supabaseAi: AiService = {
       });
     } catch (error) {
       if ((error as Error).name === 'AbortError') throw error;
-      throw new Error('Could not reach the summarizer. Check your connection.');
+      // The browser hides the reason (e.g. function not deployed → failed CORS preflight).
+      throw new Error('The AI summarizer is unreachable — it may not be deployed yet.');
     }
     if (!response.ok || !response.body) throw new Error(await functionError(response));
 
