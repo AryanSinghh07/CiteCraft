@@ -11,6 +11,8 @@ const supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY ??
 export const env = {
   supabaseUrl: supabaseUrl?.trim() || '',
   supabaseAnonKey: supabaseAnonKey?.trim() || '',
+  /** shown on the privacy policy for account / data requests */
+  contactEmail: (import.meta.env.VITE_CONTACT_EMAIL as string | undefined)?.trim() || '',
 };
 
 export const isSupabaseConfigured = Boolean(env.supabaseUrl && env.supabaseAnonKey);
