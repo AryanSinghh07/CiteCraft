@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import { publicationService, readingListService, ticketService } from '@/services';
+import { publicationService, readingListService, studentService, ticketService } from '@/services';
+import { attendanceStatus, formatTime, relativeDue, todaysClasses } from '@/features/student/utils';
 import { lookupDoi, normalizeDoi } from '@/features/publications/utils/doi';
 import { CITATION_STYLES, formatCitation } from '@/features/publications/utils/citations';
 import { GENERIC_VENUE_TYPES, PUBLICATION_TYPES, typeOptions, venueOf } from '@/features/publications/utils/publicationTypes';
@@ -127,6 +128,7 @@ export function useAssistant() {
   }, [messages, user]);
 
   const menu: QuickReply[] = [
+    ...(isStudent ? [{ label: '📅 My day', value: 'cmd:today' }] : []),
     { label: isStudent ? '➕ Add my work' : '➕ Add a publication', value: 'cmd:add' },
     { label: '📊 My stats', value: 'cmd:stats' },
     { label: '🔎 Find my work', value: 'cmd:find' },
@@ -278,6 +280,41 @@ export function useAssistant() {
     }
   };
 
+  const showToday = async () => {
+    if (!user) return;
+    try {
+      const [courses, sessions, tasks] = await Promise.all([
+        studentService.courses.list(user.id),
+        studentService.sessions.list(user.id),
+        studentService.tasks.list(user.id),
+      ]);
+      const name = (id?: string | null) => courses.find(c => c.id === id)?.name ?? 'Class';
+      const { today, ongoing } = todaysClasses(sessions);
+      const due = tasks
+        .filter(t => t.status !== 'done' && new Date(t.dueAt).getTime() - Date.now() < 3 * 24 * 3600 * 1000)
+        .slice(0, 5);
+      const risky = courses.filter(c => !attendanceStatus(c.attended, c.total, c.requiredPct).safe);
+      const lines = [
+        "Here's your day 📅",
+        today.length
+          ? `**Classes:**\n${today.map(s => `- ${formatTime(s.start)} — ${name(s.courseId)}${s.room ? ` (${s.room})` : ''}${ongoing?.id === s.id ? ' · *now*' : ''}`).join('\n')}`
+          : sessions.length
+            ? '**Classes:** none today 🎉'
+            : '**Classes:** add your timetable to see them here.',
+        due.length
+          ? `**Due soon:**\n${due.map(t => `- ${t.title} — ${relativeDue(t.dueAt)}`).join('\n')}`
+          : '**Due soon:** nothing in the next 3 days.',
+        risky.length ? `**Attendance alert:** ${risky.map(c => `${c.name} (${Math.round((c.attended / c.total) * 100)}%)`).join(', ')}` : '',
+      ];
+      say(lines.filter(Boolean).join('\n\n'), {
+        links: [{ label: 'Open College', to: '/college', tone: 'info' }],
+        options: [{ label: 'Main menu', value: 'cmd:menu' }],
+      });
+    } catch (error) {
+      say(`I couldn't load your day: ${errorText(error)}`, { tone: 'error' });
+    }
+  };
+
   // ------------------------------------------------------------------ flows
 
   const startAddManual = () => {
@@ -417,6 +454,9 @@ export function useAssistant() {
       case 'cmd:stats':
         flowRef.current = { name: 'idle' };
         return showStats();
+      case 'cmd:today':
+        flowRef.current = { name: 'idle' };
+        return showToday();
       case 'cmd:find':
         flowRef.current = { name: 'find' };
         return say(`What should I look for? A word from the title, a co-author, venue or tag.`);
@@ -500,6 +540,7 @@ export function useAssistant() {
     if (/\b(my )?(stats|statistics|h-?index|i10|how many (papers|publications)|citation count|my citations)\b/.test(lower)) {
       return showStats();
     }
+    if (/\b(my day|today'?s? (classes|schedule)|what'?s (on )?today|classes today|due soon|my deadlines)\b/.test(lower)) return showToday();
     if (/\b(raise|open|create|submit)\b.*\bticket\b|\b(talk to|contact) (a )?(human|admin|support)\b/.test(lower)) return startTicket();
     if (/\breading list\b|\bread later\b/.test(lower) && /\b(add|save|put)\b/.test(lower)) return handle('', 'cmd:reading');
     if (/\b(add|new|publish|upload|save)\b.*\b(paper|publication|article|work|project|thesis|report|preprint|poster)\b/.test(lower)) {
