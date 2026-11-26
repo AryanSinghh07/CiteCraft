@@ -31,6 +31,8 @@ Open http://localhost:8080 and sign in with one of the demo accounts, or create 
    - `supabase/migrations/0004_public_profiles.sql` — opt-in public profile pages (`/u/<slug>`)
    - `supabase/migrations/0005_ai_features.sql` — AI usage limits and saved document summaries
    - `supabase/migrations/0006_students.sql` — student accounts, new work types (thesis, project…) and the reading list
+   - `supabase/migrations/0007_student_tools.sql` — courses & attendance, timetable, assignments/exams and grades (CGPA)
+   - `supabase/migrations/0008_security.sql` — enforces two-factor authentication in the database for users who turn it on
 
    The files are safe to run again. If the Supabase GitHub integration is enabled with
    `supabase` as the directory, they are also applied automatically when merged.
@@ -62,6 +64,13 @@ update public.profiles set role = 'admin' where email = 'you@example.com';
 
 Sign out and back in; **Admin** appears in the navigation.
 
+### Two-factor authentication
+
+Authenticator-app (TOTP) 2FA is enabled by default on Supabase projects. Check it under
+**Authentication → Sign In / Providers → Multi-Factor** (*TOTP: Enabled*). Users turn it on from
+**Security** in the app; after `0008_security.sql`, their data can only be reached from a session that
+passed the code check.
+
 ### Email confirmation
 
 By default Supabase asks new users to confirm their email. Supabase's built-in email
@@ -70,7 +79,9 @@ under **Authentication → Emails** before launch, or turn off **Confirm email**
 
 ## 3. Deploy on Netlify
 
-`netlify.toml` already sets the build command, publish folder and SPA redirects.
+`netlify.toml` already sets the build command, publish folder, SPA redirects and **security
+headers** (Content-Security-Policy, no framing, no MIME sniffing, HSTS). If you add a new external
+service, add its domain to `connect-src` in the policy or the browser will block it.
 
 1. Netlify → **Site configuration → Environment variables**: add `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`.
 2. Trigger a redeploy. Without these variables the site still works in demo mode.
