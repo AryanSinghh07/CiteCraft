@@ -37,6 +37,14 @@
 
     --radius: 0.5rem;
 
+    /* Chart palette (colour-blind friendly order) */
+    --chart-1: 221 83% 53%;
+    --chart-2: 262 83% 58%;
+    --chart-3: 173 80% 36%;
+    --chart-4: 38 92% 50%;
+    --chart-5: 346 77% 50%;
+    --chart-6: 199 89% 48%;
+
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
     --sidebar-primary: 240 5.9% 10%;
@@ -75,6 +83,13 @@
     --border: 217 33% 17%;
     --input: 217 33% 20%;
     --ring: 224.3 76.3% 48%;
+
+    --chart-1: 217 91% 60%;
+    --chart-2: 263 70% 66%;
+    --chart-3: 172 66% 45%;
+    --chart-4: 43 96% 56%;
+    --chart-5: 347 77% 62%;
+    --chart-6: 199 89% 58%;
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
