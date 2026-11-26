@@ -1,22 +1,21 @@
 
 import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { Book, User, Home, LogOut, Menu, X } from "lucide-react";
+import { Book, User, Home, LogOut, Menu, X, BarChart3 } from "lucide-react";
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 
 const Navbar = () => {
   const location = useLocation();
   const isMobile = useIsMobile();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+  const isLoggedIn = Boolean(user);
 
   useEffect(() => {
-    // Check if user is logged in based on localStorage
-    const userData = localStorage.getItem('academiaUserData');
-    setIsLoggedIn(!!userData);
-
     const handleScroll = () => {
       const scrollPosition = window.scrollY;
       setIsScrolled(scrollPosition > 10);
@@ -26,10 +25,10 @@ const Navbar = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const handleLogout = () => {
-    localStorage.removeItem('academiaUserData');
-    setIsLoggedIn(false);
-    window.location.href = '/';
+  const handleLogout = async () => {
+    setIsMenuOpen(false);
+    await signOut();
+    navigate('/', { replace: true });
   };
 
   const NavItem = ({ to, label, icon: Icon }: { to: string; label: string; icon: React.ElementType }) => (
@@ -83,6 +82,7 @@ const Navbar = () => {
                       {isLoggedIn ? (
                         <>
                           <NavItem to="/dashboard" label="Dashboard" icon={Book} />
+                          <NavItem to="/summary" label="Summary" icon={BarChart3} />
                           <NavItem to="/profile" label="Profile" icon={User} />
                           <Button 
                             variant="ghost" 
@@ -107,6 +107,7 @@ const Navbar = () => {
               {isLoggedIn ? (
                 <>
                   <NavItem to="/dashboard" label="Dashboard" icon={Book} />
+                  <NavItem to="/summary" label="Summary" icon={BarChart3} />
                   <NavItem to="/profile" label="Profile" icon={User} />
                   <Button 
                     variant="ghost" 
