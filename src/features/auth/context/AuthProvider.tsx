@@ -6,6 +6,8 @@ import type { AuthUser, Profile } from '@/types';
 export interface AuthContextValue {
   user: AuthUser | null;
   profile: Profile | null;
+  /** support staff (profiles.role = 'admin') */
+  isAdmin: boolean;
   /** true until the initial session check finishes */
   loading: boolean;
   mode: typeof backendMode;
@@ -80,6 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     () => ({
       user,
       profile,
+      isAdmin: profile?.role === 'admin',
       loading,
       mode: backendMode,
       signIn: async (email, password) => {
