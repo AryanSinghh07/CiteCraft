@@ -5,6 +5,7 @@ import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxi
 import type { Publication } from '@/types';
 import { Info } from 'lucide-react';
 import { citationsByPublicationYear, researchMetrics } from '@/utils/metrics';
+import AnimatedNumber from '@/components/common/AnimatedNumber';
 
 const EXPLAIN = {
   h: 'You have h papers with at least h citations each.',
@@ -12,7 +13,7 @@ const EXPLAIN = {
   avg: 'Total citations divided by number of publications.',
 };
 
-const Metric = ({ label, value, hint }: { label: string; value: string | number; hint: string }) => (
+const Metric = ({ label, value, hint, decimals = 0 }: { label: string; value: number; hint: string; decimals?: number }) => (
   <div className="space-y-1">
     <p className="text-sm text-muted-foreground flex items-center gap-1">
       {label}
@@ -25,7 +26,9 @@ const Metric = ({ label, value, hint }: { label: string; value: string | number;
         <TooltipContent className="max-w-[220px]">{hint}</TooltipContent>
       </UITooltip>
     </p>
-    <p className="text-3xl font-bold">{value}</p>
+    <p className="text-3xl font-bold">
+      <AnimatedNumber value={value} decimals={decimals} />
+    </p>
   </div>
 );
 
@@ -44,8 +47,8 @@ const ImpactMetrics = ({ publications }: { publications: Publication[] }) => {
         <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-6">
           <Metric label="h-index" value={metrics.hIndex} hint={EXPLAIN.h} />
           <Metric label="i10-index" value={metrics.i10Index} hint={EXPLAIN.i10} />
-          <Metric label="Total citations" value={metrics.totalCitations.toLocaleString()} hint="Sum of citations across all publications." />
-          <Metric label="Avg. per paper" value={metrics.averageCitations.toFixed(1)} hint={EXPLAIN.avg} />
+          <Metric label="Total citations" value={metrics.totalCitations} hint="Sum of citations across all publications." />
+          <Metric label="Avg. per paper" value={metrics.averageCitations} decimals={1} hint={EXPLAIN.avg} />
         </CardContent>
         {metrics.mostCited && (
           <CardContent className="pt-0">
