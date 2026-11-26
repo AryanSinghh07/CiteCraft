@@ -7,23 +7,26 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
-import { authService } from '@/services';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import { MIN_PASSWORD_LENGTH } from '@/features/auth/components/SignupForm';
+import { MIN_PASSWORD_LENGTH, passwordStrength } from '@/features/security/passwordStrength';
+import PasswordStrengthMeter from '@/features/security/PasswordStrengthMeter';
+import { securityService } from '@/services';
+import MfaChallenge from '@/features/auth/components/MfaChallenge';
 
 /** Landing page for the password-reset email link (the link signs the user in). */
 const ResetPassword = () => {
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { user, loading } = useAuth();
+  const { user, loading, pendingMfa } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password.length < MIN_PASSWORD_LENGTH) {
-      toast({ title: 'Password too short', description: `Use at least ${MIN_PASSWORD_LENGTH} characters.`, variant: 'destructive' });
+    const strength = passwordStrength(password, [user?.email ?? '']);
+    if (!strength.acceptable) {
+      toast({ title: 'Choose a stronger password', description: strength.tips[0] ?? `Use at least ${MIN_PASSWORD_LENGTH} characters.`, variant: 'destructive' });
       return;
     }
     if (password !== confirm) {
@@ -32,7 +35,7 @@ const ResetPassword = () => {
     }
     setIsLoading(true);
     try {
-      await authService.updatePassword(password);
+      await securityService.changePassword(password, passwordStrength(password, [user?.email ?? '']).score);
       toast({ title: 'Password updated', description: 'You can now use your new password.' });
       navigate('/dashboard', { replace: true });
     } catch (error) {
@@ -45,6 +48,14 @@ const ResetPassword = () => {
       setIsLoading(false);
     }
   };
+
+  if (pendingMfa) {
+    return (
+      <AuthLayout title="Confirm it's you" description="Your account uses two-factor authentication. Enter your code to continue.">
+        <MfaChallenge onVerified={() => undefined} />
+      </AuthLayout>
+    );
+  }
 
   return (
     <AuthLayout title="Choose a new password" description="Pick something secure that you don't use elsewhere.">
@@ -70,6 +81,7 @@ const ResetPassword = () => {
                 minLength={MIN_PASSWORD_LENGTH}
                 required
               />
+              <PasswordStrengthMeter password={password} context={[user?.email ?? '']} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="confirm">Confirm new password</Label>
