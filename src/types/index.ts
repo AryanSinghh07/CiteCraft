@@ -26,6 +26,8 @@ export interface Profile {
   yearOfStudy?: string;
   /** students: supervisor or advisor */
   supervisor?: string;
+  /** students: 10-point or 4-point grading for CGPA */
+  gradeScale?: 4 | 10;
   /** show a shareable page at /u/<publicSlug> */
   isPublic?: boolean;
   publicSlug?: string;
@@ -213,3 +215,66 @@ export interface ReadingItem {
 }
 
 export type ReadingItemInput = Omit<ReadingItem, 'id' | 'createdAt' | 'updatedAt'>;
+
+// ------------------------------------------------------------------ college tools
+
+export type CourseColor = 'blue' | 'violet' | 'emerald' | 'amber' | 'rose' | 'cyan' | 'orange' | 'slate';
+
+export interface Course {
+  id: string;
+  name: string;
+  code?: string;
+  teacher?: string;
+  credits: number;
+  color: CourseColor;
+  attended: number;
+  total: number;
+  /** minimum attendance % required, e.g. 75 */
+  requiredPct: number;
+  createdAt: string;
+}
+
+export type ClassKind = 'lecture' | 'lab' | 'tutorial' | 'other';
+
+export interface ClassSession {
+  id: string;
+  courseId: string;
+  /** 1 = Monday … 7 = Sunday */
+  day: number;
+  /** "HH:MM" (24h) */
+  start: string;
+  end: string;
+  room?: string;
+  kind: ClassKind;
+}
+
+export type TaskKind = 'assignment' | 'exam' | 'quiz' | 'project' | 'lab' | 'presentation' | 'other';
+export type TaskStatus = 'todo' | 'doing' | 'done';
+
+export interface StudentTask {
+  id: string;
+  courseId?: string | null;
+  title: string;
+  kind: TaskKind;
+  /** ISO date-time */
+  dueAt: string;
+  priority: 'low' | 'medium' | 'high';
+  status: TaskStatus;
+  notes?: string;
+  createdAt: string;
+}
+
+export interface GradeEntry {
+  id: string;
+  semester: number;
+  courseName: string;
+  credits: number;
+  gradePoint: number;
+  letter?: string;
+}
+
+/** Fields the user supplies when creating each record. */
+export type CourseInput = Omit<Course, 'id' | 'createdAt'>;
+export type ClassSessionInput = Omit<ClassSession, 'id'>;
+export type StudentTaskInput = Omit<StudentTask, 'id' | 'createdAt'>;
+export type GradeEntryInput = Omit<GradeEntry, 'id'>;
