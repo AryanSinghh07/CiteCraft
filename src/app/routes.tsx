@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect } from 'react';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 import { Route, Routes, useLocation } from 'react-router-dom';
 import ProtectedRoute, { AdminRoute, GuestRoute } from '@/features/auth/components/ProtectedRoute';
 import LoadingScreen from '@/components/common/LoadingScreen';
@@ -18,6 +19,8 @@ const AdminTickets = lazy(() => import('@/pages/AdminTickets'));
 const PublicProfile = lazy(() => import('@/pages/PublicProfile'));
 const CV = lazy(() => import('@/pages/CV'));
 const NotFound = lazy(() => import('@/pages/NotFound'));
+const Summarize = lazy(() => import('@/pages/Summarize'));
+const AssistantWidget = lazy(() => import('@/features/assistant/components/AssistantWidget'));
 
 /** Scrolls to the top on navigation (but keeps #anchor jumps working). */
 const ScrollToTop = () => {
@@ -30,6 +33,7 @@ const ScrollToTop = () => {
 
 const AppRoutes = () => {
   const location = useLocation();
+  const { user } = useAuth();
 
   return (
     <>
@@ -56,6 +60,7 @@ const AppRoutes = () => {
               <Route path="/profile" element={<Profile />} />
               <Route path="/summary" element={<Summary />} />
               <Route path="/cv" element={<CV />} />
+              <Route path="/summarize" element={<Summarize />} />
               <Route path="/support" element={<Support />} />
               <Route path="/support/:ticketId" element={<SupportTicket />} />
 
@@ -69,6 +74,13 @@ const AppRoutes = () => {
           </Routes>
         </div>
       </Suspense>
+
+      {/* AI assistant: available on every page once signed in */}
+      {user && (
+        <Suspense fallback={null}>
+          <AssistantWidget />
+        </Suspense>
+      )}
     </>
   );
 };
