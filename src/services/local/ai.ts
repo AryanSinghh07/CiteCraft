@@ -1,18 +1,11 @@
 import type { AiService } from '../types';
 
 const UNAVAILABLE =
-  'The AI assistant and summarizer run on the CiteCraft server, so they are not available in demo mode. Connect Supabase (see docs/SETUP.md) to use them.';
+  'The AI summarizer runs on the CiteCraft server, so it is not available in demo mode. Connect Supabase (see docs/SETUP.md) to use it.';
 
-/** Demo mode has no server, so AI features explain how to enable them. */
+/** Demo mode has no server, so the summarizer explains how to enable it. */
 export const localAi: AiService = {
   available: false,
-
-  async chat() {
-    return {
-      reply: `${UNAVAILABLE}\n\nMeanwhile, the **Help & Support** page has quick answers to common questions.`,
-      actions: [],
-    };
-  },
 
   async summarize() {
     throw new Error(UNAVAILABLE);
