@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Eye, EyeOff, ArrowRight, Loader2, Info } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { DEMO_EMAIL, DEMO_PASSWORD } from '@/services/local/seed';
+import MfaChallenge from './MfaChallenge';
 
 const LoginForm = () => {
   const [email, setEmail] = useState('');
@@ -15,7 +16,7 @@ const LoginForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const { toast } = useToast();
-  const { signIn, mode } = useAuth();
+  const { signIn, mode, pendingMfa } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const redirectTo = (location.state as { from?: string } | null)?.from ?? '/dashboard';
@@ -29,7 +30,8 @@ const LoginForm = () => {
 
     setIsLoading(true);
     try {
-      await signIn(email, password);
+      const { mfaRequired } = await signIn(email, password);
+      if (mfaRequired) return; // the two-factor step takes over below
       toast({ title: 'Welcome back!', description: 'You have signed in successfully.' });
       navigate(redirectTo, { replace: true });
     } catch (error) {
@@ -42,6 +44,8 @@ const LoginForm = () => {
       setIsLoading(false);
     }
   };
+
+  if (pendingMfa) return <MfaChallenge onVerified={() => navigate(redirectTo, { replace: true })} />;
 
   const fillDemo = () => {
     setEmail(DEMO_EMAIL);
