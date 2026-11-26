@@ -179,6 +179,18 @@ Today's classes (with **NOW** / **NEXT**) then show on your dashboard. Ask me *m
 - **Download my data** for a copy of everything you've added.`,
   },
   {
+    id: 'privacy',
+    title: 'Privacy & my data',
+    keywords: ['privacy', 'private', 'my data', 'data safe', 'who can see', 'gdpr', 'dpdp', 'privacy policy', 'sell my data', 'third party'],
+    answer: `Your data is private to your account — the database blocks anyone else from reading it, and we never sell it or show ads. Read the full [Privacy policy](/privacy), or download everything from [Security → Download my data](/security).`,
+  },
+  {
+    id: 'delete',
+    title: 'Delete my account',
+    keywords: ['delete account', 'delete my account', 'remove account', 'close account', 'close my account', 'deactivate', 'erase my data'],
+    answer: `Go to [Security](/security) and scroll to **Delete account**, then type **DELETE** to confirm. Your account and all its data (work, documents, reading list, college data, tickets) are removed immediately and can't be recovered — use **Download my data** first if you want a copy.`,
+  },
+  {
     id: 'support',
     title: 'Contact support',
     keywords: ['support', 'help desk', 'contact', 'human', 'admin', 'complaint', 'issue', 'bug', 'not working', 'error', 'broken'],
