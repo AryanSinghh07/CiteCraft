@@ -39,8 +39,21 @@ export function useDocuments() {
     if (url.startsWith('blob:')) setTimeout(() => URL.revokeObjectURL(url), 60_000);
   };
 
+  /** The file itself, for the in-app viewer. */
+  const load = async (doc: DocumentRecord): Promise<Blob> => {
+    const url = await documentService.getFileUrl(user!.id, doc);
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('This file could not be downloaded. Try again in a moment.');
+      return await res.blob();
+    } finally {
+      if (url.startsWith('blob:')) URL.revokeObjectURL(url);
+    }
+  };
+
   return {
     documents: query.data ?? [],
+    load,
     isLoading: query.isLoading,
     error: query.error as Error | null,
     upload,
