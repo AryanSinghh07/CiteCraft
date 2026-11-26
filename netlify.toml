@@ -1,0 +1,9 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+# Single-page app: send every route (e.g. /dashboard) to index.html
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

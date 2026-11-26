@@ -1,13 +1,18 @@
 # 📚 Elevate Your Academic Publication Profile
 
+> [!IMPORTANT]
+> 🚧 **CiteCraft v2 is under active development.**
+> A new version is being built with real user accounts, a cloud database (Supabase), saved publications, document storage, a support ticket system, research metrics, and a refreshed UI with animations.
+> The live demo below still runs the current version. Follow progress on the [`v2-dev` branch](https://github.com/AryanSinghh07/CiteCraft/tree/v2-dev).
+
 A sophisticated web-based tool designed for faculty members and researchers to **manage**, **analyze**, and **showcase** their academic publication records. Featuring elegant visualizations and powerful summaries, this platform helps elevate your scholarly profile with ease and professionalism.
 
 🔗 **Live Demo (for demonstration purposes only):** [https://citecraft.netlify.app/](https://citecraft.netlify.app/)
 
 
 🧪 **Demo Login:**
-- **Email:** `demo@example.com`
-- **Password:** `demo`
+- **Email:** `aryan@example.com`
+- **Password:** `aryan`
 
 ![Image](https://github.com/user-attachments/assets/d85629d2-10c2-49ac-a34d-a825000d544a)
 
@@ -54,5 +59,5 @@ A sophisticated web-based tool designed for faculty members and researchers to *
 1. **Clone the repository**
 
    ```bash
-   git clone https://AryanSinghh07/CiteCraft.git
+   git clone https://github.com/AryanSinghh07/CiteCraft.git
    cd CiteCraft
