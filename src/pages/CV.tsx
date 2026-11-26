@@ -7,16 +7,14 @@ import { useAuth } from '@/features/auth/hooks/useAuth';
 import { usePublications } from '@/features/publications/hooks/usePublications';
 import { CITATION_STYLES, formatCitation, type CitationStyle } from '@/features/publications/utils/citations';
 import { researchMetrics } from '@/utils/metrics';
+import { PUBLICATION_TYPES, PUBLICATION_TYPE_ORDER } from '@/features/publications/utils/publicationTypes';
 import type { PublicationType } from '@/types';
 import { ArrowLeft, Printer } from 'lucide-react';
 
-const SECTIONS: { type: PublicationType; title: string }[] = [
-  { type: 'journal', title: 'Journal Articles' },
-  { type: 'conference', title: 'Conference Papers' },
-  { type: 'book', title: 'Books' },
-  { type: 'chapter', title: 'Book Chapters' },
-  { type: 'other', title: 'Other Publications' },
-];
+const SECTIONS: { type: PublicationType; title: string }[] = PUBLICATION_TYPE_ORDER.map(type => ({
+  type,
+  title: PUBLICATION_TYPES[type].plural,
+}));
 
 /** Publication CV formatted for printing; "Save as PDF" in the print dialog makes the PDF. */
 const CV = () => {
@@ -59,7 +57,12 @@ const CV = () => {
         <header className="border-b-2 border-neutral-900 pb-4 mb-6">
           <h1 className="text-3xl font-bold tracking-tight">{profile?.name || 'Your Name'}</h1>
           <p className="text-neutral-700">
-            {[profile?.position, profile?.department, profile?.affiliation].filter(Boolean).join(' · ')}
+            {(profile?.accountType === 'student'
+              ? [profile.program, profile.affiliation]
+              : [profile?.position, profile?.department, profile?.affiliation]
+            )
+              .filter(Boolean)
+              .join(' · ')}
           </p>
           <p className="text-sm text-neutral-600 mt-1">
             {[
@@ -79,15 +82,29 @@ const CV = () => {
           </section>
         )}
 
+        {profile?.accountType === 'student' && (profile.program || profile.affiliation) && (
+          <section className="mb-6 break-inside-avoid">
+            <h2 className="text-sm font-bold uppercase tracking-widest text-neutral-500 mb-2">Education</h2>
+            <p className="text-sm font-semibold">{profile.program || 'Student'}</p>
+            <p className="text-sm">
+              {[profile.affiliation, profile.department, profile.yearOfStudy].filter(Boolean).join(' · ')}
+            </p>
+            {profile.supervisor && <p className="text-sm text-neutral-600">Supervisor: {profile.supervisor}</p>}
+          </section>
+        )}
+
         <section className="mb-6 break-inside-avoid">
-          <h2 className="text-sm font-bold uppercase tracking-widest text-neutral-500 mb-2">Research metrics</h2>
+          <h2 className="text-sm font-bold uppercase tracking-widest text-neutral-500 mb-2">
+            {profile?.accountType === 'student' ? 'Summary' : 'Research metrics'}
+          </h2>
           <p className="text-sm">
-            {publications.length} publications · {metrics.totalCitations.toLocaleString()} citations · h-index{' '}
-            {metrics.hIndex} · i10-index {metrics.i10Index}
+            {profile?.accountType === 'student'
+              ? `${publications.length} works${metrics.totalCitations ? ` · ${metrics.totalCitations.toLocaleString()} citations` : ''}`
+              : `${publications.length} publications · ${metrics.totalCitations.toLocaleString()} citations · h-index ${metrics.hIndex} · i10-index ${metrics.i10Index}`}
           </p>
           {profile?.researchInterests && profile.researchInterests.length > 0 && (
             <p className="text-sm mt-1">
-              <span className="font-semibold">Research interests:</span> {profile.researchInterests.join(', ')}
+              <span className="font-semibold">{profile.accountType === 'student' ? 'Interests' : 'Research interests'}:</span> {profile.researchInterests.join(', ')}
             </p>
           )}
         </section>
