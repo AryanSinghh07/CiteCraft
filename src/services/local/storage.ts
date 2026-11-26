@@ -17,6 +17,7 @@ export const keys = {
   ticketAttachments: `${PREFIX}ticket-attachments`,
   ticketSeq: `${PREFIX}ticket-seq`,
   seedVersion: `${PREFIX}seed-version`,
+  readingList: (userId: string) => `${PREFIX}reading-list:${userId}`,
 };
 
 export function readJson<T>(key: string, fallback: T): T {
