@@ -12,6 +12,11 @@ export const keys = {
   profile: (userId: string) => `${PREFIX}profile:${userId}`,
   publications: (userId: string) => `${PREFIX}publications:${userId}`,
   documents: (userId: string) => `${PREFIX}documents:${userId}`,
+  tickets: `${PREFIX}tickets`,
+  ticketMessages: `${PREFIX}ticket-messages`,
+  ticketAttachments: `${PREFIX}ticket-attachments`,
+  ticketSeq: `${PREFIX}ticket-seq`,
+  seedVersion: `${PREFIX}seed-version`,
 };
 
 export function readJson<T>(key: string, fallback: T): T {
