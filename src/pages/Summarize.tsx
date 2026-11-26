@@ -99,7 +99,24 @@ const Summarize = () => {
   const [pendingDelete, setPendingDelete] = useState<SummaryRecord | null>(null);
   // AI when the server supports it; otherwise (or by choice) the free in-browser quick summary.
   const [engine, setEngineState] = useState<Engine>(() => (aiService.available ? savedEngine() : 'quick'));
-  const [aiMissing, setAiMissing] = useState(!aiService.available);
+  // Remember for this browser session that the AI summarizer isn't available, so we don't retry it.
+  const [aiMissing, setAiMissingState] = useState(() => {
+    if (!aiService.available) return true;
+    try {
+      return sessionStorage.getItem('citecraft:ai-missing') === '1';
+    } catch {
+      return false;
+    }
+  });
+  const setAiMissing = (missing: boolean) => {
+    setAiMissingState(missing);
+    try {
+      if (missing) sessionStorage.setItem('citecraft:ai-missing', '1');
+      else sessionStorage.removeItem('citecraft:ai-missing');
+    } catch {
+      /* ignore */
+    }
+  };
   const setEngine = (next: Engine) => {
     setEngineState(next);
     try {
@@ -177,7 +194,7 @@ const Summarize = () => {
     }
   };
 
-  const runAi = async (target: File, signal: AbortSignal) => {
+  const runAi = async (target: File, signal: AbortSignal, onFirstText?: () => void) => {
     const source = await readDocument(target);
     setStatus('streaming');
     const result = await aiService.summarize(
@@ -188,7 +205,10 @@ const Summarize = () => {
         source,
         options: { length, focus, language },
       },
-      chunk => setOutput(prev => prev + chunk),
+      chunk => {
+        onFirstText?.();
+        setOutput(prev => prev + chunk);
+      },
       signal,
     );
     if (result.truncated) {
@@ -206,15 +226,26 @@ const Summarize = () => {
     outputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     try {
       if (engine === 'ai' && !aiMissing) {
+        let streamed = false;
         try {
-          await runAi(file, controller.signal);
+          await runAi(file, controller.signal, () => {
+            streamed = true;
+          });
         } catch (error) {
-          // The AI server isn't deployed / configured yet: fall back to the quick summary.
-          if ((error as Error).name === 'AbortError' || !(isSetupError(error) || /not configured/i.test(errorMessage(error)))) throw error;
-          setAiMissing(true);
-          setEngine('quick');
+          if ((error as Error).name === 'AbortError') throw error;
+          // Half-written AI summary: keep it and show the error rather than replacing it.
+          if (streamed) throw error;
+          // AI failed before writing anything (not deployed, unreachable, busy…): make a quick summary instead.
+          const unavailable = isSetupError(error);
+          if (unavailable) {
+            setAiMissing(true);
+            setEngine('quick');
+          }
           setOutput('');
-          toast({ title: 'AI summaries aren’t set up yet', description: 'Made a quick summary in your browser instead.' });
+          toast({
+            title: unavailable ? 'AI summaries aren’t available yet' : 'AI summary failed',
+            description: `${unavailable ? '' : errorMessage(error) + ' '}Made a quick summary in your browser instead.`,
+          });
           await runQuick(file, controller.signal);
         }
       } else {
