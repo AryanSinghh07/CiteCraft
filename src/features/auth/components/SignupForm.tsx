@@ -181,7 +181,14 @@ const SignupForm = () => {
           </Button>
         </form>
       </CardContent>
-      <CardFooter className="flex justify-center">
+      <CardFooter className="flex flex-col items-center gap-2">
+        <p className="text-xs text-muted-foreground text-center">
+          By creating an account you agree to our{' '}
+          <Link to="/privacy" className="text-primary hover:underline">
+            privacy policy
+          </Link>
+          .
+        </p>
         <p className="text-sm text-muted-foreground">
           Already have an account?{' '}
           <Link to="/login" className="text-primary hover:underline">
