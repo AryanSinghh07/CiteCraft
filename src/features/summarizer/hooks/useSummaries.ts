@@ -14,7 +14,7 @@ export function useSummaries() {
   const query = useQuery({
     queryKey: key,
     queryFn: () => aiService.listSummaries(user!.id),
-    enabled: Boolean(user) && aiService.available,
+    enabled: Boolean(user),
   });
 
   const remove = useMutation({
