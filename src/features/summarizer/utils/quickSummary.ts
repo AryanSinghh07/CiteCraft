@@ -63,6 +63,7 @@ const isNoise = (line: string) =>
   /@\S+\.\S+|https?:\/\/|www\.|\+?\d[\d\s-]{8,}\d/.test(line) ||
   (line.match(/\|/g) ?? []).length >= 2 ||
   /^[\W\d\s]+$/.test(line) ||
+  /^(fig(?:ure)?\.?|table|chart|image|photo)\s*\d+[a-z]?\s*[:.]/i.test(line) || // captions
   isTitle(line);
 
 /** A Title Case line without a full stop, e.g. a document title "Crop Disease Detection with Deep Learning". */
