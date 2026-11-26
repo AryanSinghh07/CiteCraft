@@ -33,11 +33,13 @@ import {
 } from '@/features/summarizer/utils/readDocument';
 import { quickSummary } from '@/features/summarizer/utils/quickSummary';
 import { isSetupError } from '@/utils/errors';
+import { DocumentViewer, type ViewerSource } from '@/features/documents/components/DocumentViewer';
 import type { DocumentRecord, SummaryFocus, SummaryLength, SummaryRecord } from '@/types';
 import {
   Check,
   Copy,
   Download,
+  Eye,
   FileText,
   History,
   Info,
@@ -94,6 +96,7 @@ const Summarize = () => {
   const [status, setStatus] = useState<Status>('idle');
   const [output, setOutput] = useState('');
   const [stage, setStage] = useState('');
+  const [viewing, setViewing] = useState<ViewerSource | null>(null);
   const [outputTitle, setOutputTitle] = useState('');
   const [copied, setCopied] = useState(false);
   const [dragging, setDragging] = useState(false);
@@ -366,6 +369,15 @@ const Summarize = () => {
                       <p className="truncate text-sm font-medium">{file.name}</p>
                       <p className="text-xs text-muted-foreground">{formatSize(file.size)}</p>
                     </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setViewing({ name: file.name, mimeType: file.type, size: file.size, load: async () => file })}
+                      aria-label="Preview file"
+                      title="Preview"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
                     <Button variant="ghost" size="icon" onClick={() => setFile(null)} disabled={busy} aria-label="Remove file">
                       <X className="h-4 w-4" />
                     </Button>
@@ -628,6 +640,8 @@ const Summarize = () => {
           )}
         </div>
       </main>
+
+      <DocumentViewer source={viewing} onClose={() => setViewing(null)} />
 
       <AlertDialog open={Boolean(pendingDelete)} onOpenChange={open => !open && setPendingDelete(null)}>
         <AlertDialogContent>
