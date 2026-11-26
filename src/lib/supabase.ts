@@ -13,8 +13,9 @@ export function requireSupabase(): SupabaseClient {
   return supabase;
 }
 
-/** Storage buckets (created by supabase/migrations/0002_storage.sql). */
+/** Storage buckets (created by the SQL files in supabase/migrations). */
 export const BUCKETS = {
   avatars: 'avatars',
   documents: 'documents',
+  ticketAttachments: 'ticket-attachments',
 } as const;
