@@ -30,6 +30,17 @@ export const supabasePublications: PublicationService = {
     return publicationFromRow(data);
   },
 
+  async createMany(userId, inputs) {
+    if (inputs.length === 0) return [];
+    const { data, error } = await requireSupabase()
+      .from('publications')
+      .insert(inputs.map(input => ({ ...publicationToRow(input), user_id: userId })))
+      .select('*')
+      .returns<PublicationRow[]>();
+    if (error) throw new Error(friendlyError(error.message));
+    return (data ?? []).map(publicationFromRow);
+  },
+
   async update(userId, publication) {
     const { id, createdAt: _c, updatedAt: _u, ...input } = publication;
     const { data, error } = await requireSupabase()
