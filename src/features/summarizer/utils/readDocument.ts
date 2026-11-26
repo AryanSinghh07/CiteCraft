@@ -184,23 +184,28 @@ export async function readDocument(file: File): Promise<SummarySource> {
 async function pdfText(file: File): Promise<string> {
   const [pdfjs, worker] = await Promise.all([import('pdfjs-dist'), import('pdfjs-dist/build/pdf.worker.min.mjs?url')]);
   pdfjs.GlobalWorkerOptions.workerSrc = worker.default;
-  let doc;
-  try {
-    doc = await pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
-  } catch {
-    throw new Error('This PDF could not be opened. It may be corrupted or password-protected.');
-  }
+  const task = pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()) });
   const pages: string[] = [];
-  for (let i = 1; i <= doc.numPages; i++) {
-    const content = await (await doc.getPage(i)).getTextContent();
-    let page = '';
-    for (const item of content.items) {
-      if (!('str' in item)) continue;
-      page += item.str + (item.hasEOL ? '\n' : ' ');
+  try {
+    let doc: Awaited<typeof task.promise>;
+    try {
+      doc = await task.promise;
+    } catch {
+      throw new Error('This PDF could not be opened. It may be corrupted or password-protected.');
     }
-    pages.push(page);
+    for (let i = 1; i <= doc.numPages; i++) {
+      const content = await (await doc.getPage(i)).getTextContent();
+      let page = '';
+      for (const item of content.items) {
+        if (!('str' in item)) continue;
+        page += item.str + (item.hasEOL ? '\n' : ' ');
+      }
+      pages.push(page);
+    }
+  } finally {
+    // In PDF.js 6 the loading task (not the document) frees the worker and memory.
+    await task.destroy().catch(() => undefined);
   }
-  await doc.destroy();
   const text = pages.join('\n\n').replace(/[ \t]+/g, ' ').trim();
   if (text.replace(/\s/g, '').length < 50) {
     throw new Error('This PDF has no selectable text (it may be a scan). The AI summarizer can read scanned pages once it is set up.');
