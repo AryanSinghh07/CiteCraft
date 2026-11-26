@@ -21,12 +21,12 @@ export const supabaseAuth: AuthService = {
     return toAuthUser(data.user)!;
   },
 
-  async signUp({ name, email, password }) {
+  async signUp({ name, email, password, accountType }) {
     const { data, error } = await requireSupabase().auth.signUp({
       email: email.trim(),
       password,
       options: {
-        data: { full_name: name.trim() },
+        data: { full_name: name.trim(), account_type: accountType },
         emailRedirectTo: `${window.location.origin}/dashboard`,
       },
     });
