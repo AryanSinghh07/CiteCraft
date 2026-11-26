@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect } from 'react';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 import { Route, Routes, useLocation } from 'react-router-dom';
 import ProtectedRoute, { AdminRoute, GuestRoute } from '@/features/auth/components/ProtectedRoute';
 import LoadingScreen from '@/components/common/LoadingScreen';
@@ -18,6 +19,13 @@ const AdminTickets = lazy(() => import('@/pages/AdminTickets'));
 const PublicProfile = lazy(() => import('@/pages/PublicProfile'));
 const CV = lazy(() => import('@/pages/CV'));
 const NotFound = lazy(() => import('@/pages/NotFound'));
+const Summarize = lazy(() => import('@/pages/Summarize'));
+const ReadingList = lazy(() => import('@/pages/ReadingList'));
+const Cite = lazy(() => import('@/pages/Cite'));
+const College = lazy(() => import('@/pages/College'));
+const Security = lazy(() => import('@/pages/Security'));
+const Privacy = lazy(() => import('@/pages/Privacy'));
+const AssistantWidget = lazy(() => import('@/features/assistant/components/AssistantWidget'));
 
 /** Scrolls to the top on navigation (but keeps #anchor jumps working). */
 const ScrollToTop = () => {
@@ -30,6 +38,7 @@ const ScrollToTop = () => {
 
 const AppRoutes = () => {
   const location = useLocation();
+  const { user } = useAuth();
 
   return (
     <>
@@ -43,6 +52,8 @@ const AppRoutes = () => {
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/u/:slug" element={<PublicProfile />} />
+            <Route path="/cite" element={<Cite />} />
+            <Route path="/privacy" element={<Privacy />} />
 
             {/* Only when signed out */}
             <Route element={<GuestRoute />}>
@@ -56,6 +67,10 @@ const AppRoutes = () => {
               <Route path="/profile" element={<Profile />} />
               <Route path="/summary" element={<Summary />} />
               <Route path="/cv" element={<CV />} />
+              <Route path="/summarize" element={<Summarize />} />
+              <Route path="/reading-list" element={<ReadingList />} />
+              <Route path="/college" element={<College />} />
+              <Route path="/security" element={<Security />} />
               <Route path="/support" element={<Support />} />
               <Route path="/support/:ticketId" element={<SupportTicket />} />
 
@@ -69,6 +84,13 @@ const AppRoutes = () => {
           </Routes>
         </div>
       </Suspense>
+
+      {/* AI assistant: available on every page once signed in */}
+      {user && (
+        <Suspense fallback={null}>
+          <AssistantWidget />
+        </Suspense>
+      )}
     </>
   );
 };

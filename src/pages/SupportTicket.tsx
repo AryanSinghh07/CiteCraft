@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
@@ -9,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useStaff, useTicket } from '@/features/support/hooks/useTickets';
 import TicketThread from '@/features/support/components/TicketThread';
+import { DocumentViewer, type ViewerSource } from '@/features/documents/components/DocumentViewer';
 import ReplyBox from '@/features/support/components/ReplyBox';
 import TicketRating from '@/features/support/components/TicketRating';
 import AdminTicketControls from '@/features/support/components/AdminTicketControls';
@@ -22,7 +24,8 @@ const errorMessage = (error: unknown) => (error instanceof Error ? error.message
 const SupportTicket = () => {
   const { ticketId = '' } = useParams();
   const { user, isAdmin } = useAuth();
-  const { ticket, messages, attachments, isLoading, error, reply, update, openAttachment } = useTicket(ticketId);
+  const { ticket, messages, attachments, isLoading, error, reply, update, loadAttachment } = useTicket(ticketId);
+  const [viewing, setViewing] = useState<ViewerSource | null>(null);
   const { data: staff = [] } = useStaff();
   const { toast } = useToast();
 
@@ -46,13 +49,8 @@ const SupportTicket = () => {
     }
   };
 
-  const handleOpenAttachment = async (attachment: TicketAttachment) => {
-    try {
-      await openAttachment(attachment);
-    } catch (err) {
-      toast({ title: 'Could not open file', description: errorMessage(err), variant: 'destructive' });
-    }
-  };
+  const handleOpenAttachment = (attachment: TicketAttachment) =>
+    setViewing({ name: attachment.name, mimeType: attachment.mimeType, size: attachment.size, load: () => loadAttachment(attachment) });
 
   if (isLoading) return <LoadingScreen label="Loading ticket…" />;
 
@@ -241,6 +239,8 @@ const SupportTicket = () => {
           </div>
         </div>
       </main>
+
+      <DocumentViewer source={viewing} onClose={() => setViewing(null)} />
 
       <Footer />
     </div>

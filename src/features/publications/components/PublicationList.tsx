@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Search, Filter, SortAsc, SortDesc, RefreshCw } from 'lucide-react';
 import PublicationForm from './PublicationForm';
+import { PUBLICATION_TYPES, PUBLICATION_TYPE_ORDER, venueOf } from '../utils/publicationTypes';
 
 interface PublicationListProps {
   publications: Publication[];
@@ -68,8 +69,7 @@ const PublicationList = ({ publications, onUpdate, onDelete }: PublicationListPr
         pub.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         pub.authors.some(author => author.toLowerCase().includes(searchQuery.toLowerCase())) ||
         (pub.abstract && pub.abstract.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (pub.journal && pub.journal.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (pub.conference && pub.conference.toLowerCase().includes(searchQuery.toLowerCase()));
+        venueOf(pub).toLowerCase().includes(searchQuery.toLowerCase());
       
       const matchesFilter = 
         filterType === 'all' || 
@@ -115,12 +115,12 @@ const PublicationList = ({ publications, onUpdate, onDelete }: PublicationListPr
                 </div>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
-                <SelectItem value="journal">Journal Articles</SelectItem>
-                <SelectItem value="conference">Conference Papers</SelectItem>
-                <SelectItem value="book">Books</SelectItem>
-                <SelectItem value="chapter">Book Chapters</SelectItem>
-                <SelectItem value="other">Other</SelectItem>
+                <SelectItem value="all">All types</SelectItem>
+                {PUBLICATION_TYPE_ORDER.filter(type => publications.some(p => p.type === type)).map(type => (
+                  <SelectItem key={type} value={type}>
+                    {PUBLICATION_TYPES[type].plural}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -156,7 +156,7 @@ const PublicationList = ({ publications, onUpdate, onDelete }: PublicationListPr
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-6">
           {displayedPublications.map((publication, index) => (
             <div key={publication.id} className="animate-fade-up" style={{ animationDelay: `${Math.min(index, 12) * 40}ms` }}>
               <PublicationCard publication={publication} onEdit={handleEdit} onDelete={handleDelete} />

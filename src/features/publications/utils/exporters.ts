@@ -1,5 +1,6 @@
 import type { Publication } from '@/types';
 import { toBibtex } from './bibtex';
+import { PUBLICATION_TYPES, venueOf } from './publicationTypes';
 import { formatBibliography, type CitationStyle } from './citations';
 
 /** File exports for a publication list. */
@@ -16,8 +17,8 @@ export function toCsv(publications: Publication[]): string {
   const rows = publications.map(p => [
     p.title,
     p.authors.join('; '),
-    p.type,
-    p.journal || p.conference || p.book || '',
+    PUBLICATION_TYPES[p.type].label,
+    venueOf(p),
     p.year,
     p.citations ?? 0,
     p.doi,

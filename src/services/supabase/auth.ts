@@ -1,5 +1,5 @@
 import type { User } from '@supabase/supabase-js';
-import { requireSupabase } from '@/lib/supabase';
+import { BUCKETS, requireSupabase } from '@/lib/supabase';
 import type { AuthUser } from '@/types';
 import type { AuthService } from '../types';
 
@@ -21,12 +21,12 @@ export const supabaseAuth: AuthService = {
     return toAuthUser(data.user)!;
   },
 
-  async signUp({ name, email, password }) {
+  async signUp({ name, email, password, accountType }) {
     const { data, error } = await requireSupabase().auth.signUp({
       email: email.trim(),
       password,
       options: {
-        data: { full_name: name.trim() },
+        data: { full_name: name.trim(), account_type: accountType },
         emailRedirectTo: `${window.location.origin}/dashboard`,
       },
     });
@@ -49,6 +49,39 @@ export const supabaseAuth: AuthService = {
   async updatePassword(newPassword) {
     const { error } = await requireSupabase().auth.updateUser({ password: newPassword });
     if (error) throw new Error(error.message);
+  },
+
+  async deleteAccount() {
+    const client = requireSupabase();
+    const { data } = await client.auth.getUser();
+    const userId = data.user?.id;
+    if (!userId) throw new Error('Please sign in again.');
+
+    // 1. Delete stored files (the database cascade can't remove the files themselves).
+    const removeFolder = async (bucket: string, folder: string) => {
+      const { data: files } = await client.storage.from(bucket).list(folder, { limit: 1000 });
+      const paths = (files ?? []).filter(f => f.name).map(f => `${folder}/${f.name}`);
+      if (paths.length) await client.storage.from(bucket).remove(paths);
+    };
+    const { data: tickets } = await client.from('tickets').select('id').eq('user_id', userId);
+    await Promise.allSettled([
+      removeFolder(BUCKETS.avatars, userId),
+      removeFolder(BUCKETS.documents, userId),
+      ...(tickets ?? []).map(t => removeFolder(BUCKETS.ticketAttachments, t.id)),
+    ]);
+
+    // 2. Delete the account; everything else is removed by ON DELETE CASCADE.
+    const { error } = await client.rpc('delete_my_account');
+    if (error) {
+      throw new Error(
+        /Two-factor/i.test(error.message)
+          ? 'Please sign out and back in with your 2FA code, then try again.'
+          : /function .* does not exist|schema cache/i.test(error.message)
+            ? 'Account deletion isn’t set up on the server yet (migration 0009). Please contact support.'
+            : error.message,
+      );
+    }
+    await client.auth.signOut({ scope: 'local' }).catch(() => undefined);
   },
 
   onAuthChange(callback) {

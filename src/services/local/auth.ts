@@ -2,6 +2,7 @@ import type { AuthUser } from '@/types';
 import type { AuthService } from '../types';
 import { ensureDemoSeed, type StoredUser } from './seed';
 import {
+  fileStore,
   hashPassword,
   keys,
   newId,
@@ -49,7 +50,7 @@ export const localAuth: AuthService = {
     return authUser;
   },
 
-  async signUp({ name, email, password }) {
+  async signUp({ name, email, password, accountType }) {
     await ensureDemoSeed();
     await simulateLatency(500);
     const normalized = normalizeEmail(email);
@@ -73,6 +74,7 @@ export const localAuth: AuthService = {
       affiliation: '',
       position: '',
       department: '',
+      accountType,
     });
     writeJson(keys.publications(user.id), []);
     writeJson(keys.session, user.id);
@@ -101,6 +103,36 @@ export const localAuth: AuthService = {
       keys.users,
       users.map(u => (u.id === session.id ? { ...u, salt, passwordHash } : u)),
     );
+  },
+
+  async deleteAccount() {
+    const session = currentUser();
+    if (!session) throw new Error('Please sign in again.');
+    const id = session.id;
+    // Files kept in IndexedDB for this user's documents.
+    const docs = readJson<{ storagePath: string }[]>(keys.documents(id), []);
+    await Promise.allSettled(docs.map(d => fileStore.delete(d.storagePath)));
+    // Everything stored under this user's id.
+    const prefixes = ['profile', 'publications', 'documents', 'reading-list', 'courses', 'class-sessions', 'tasks', 'grades', 'summaries', 'security'];
+    prefixes.forEach(p => removeKey(`citecraft:${p}:${id}`));
+    try {
+      sessionStorage.removeItem(`citecraft:assistant:v2:${id}`);
+    } catch {
+      /* ignore */
+    }
+    // Their tickets and messages.
+    const tickets = readJson<{ id: string; userId: string }[]>(keys.tickets, []);
+    const mine = new Set(tickets.filter(t => t.userId === id).map(t => t.id));
+    writeJson(keys.tickets, tickets.filter(t => !mine.has(t.id)));
+    writeJson(
+      keys.ticketMessages,
+      readJson<{ ticketId: string; authorId: string }[]>(keys.ticketMessages, []).filter(m => !mine.has(m.ticketId) && m.authorId !== id),
+    );
+    writeJson(keys.ticketAttachments, readJson<{ ticketId: string }[]>(keys.ticketAttachments, []).filter(a => !mine.has(a.ticketId)));
+    // Finally the account itself.
+    writeJson(keys.users, readJson<StoredUser[]>(keys.users, []).filter(u => u.id !== id));
+    removeKey(keys.session);
+    emit(null);
   },
 
   onAuthChange(callback) {

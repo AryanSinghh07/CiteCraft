@@ -9,6 +9,8 @@ import type { Publication, PublicationType } from '@/types';
 import { XIcon, PlusIcon, Loader2, Wand2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { lookupDoi } from '../utils/doi';
+import { GENERIC_VENUE_TYPES, PUBLICATION_TYPES, typeOptions } from '../utils/publicationTypes';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 
 interface PublicationFormProps {
   initialData?: Publication;
@@ -19,13 +21,15 @@ interface PublicationFormProps {
 }
 
 const PublicationForm = ({ initialData, onSubmit, onCancel, isSubmitting = false }: PublicationFormProps) => {
+  const { profile: currentProfile } = useAuth();
+  const defaultType: PublicationType = currentProfile?.accountType === 'student' ? 'project' : 'journal';
   const [publication, setPublication] = useState<Publication>(
     initialData || {
       id: '',
       title: '',
       authors: [''],
       year: new Date().getFullYear(),
-      type: 'journal',
+      type: defaultType,
       tags: [],
     }
   );
@@ -33,6 +37,7 @@ const PublicationForm = ({ initialData, onSubmit, onCancel, isSubmitting = false
   const [doiQuery, setDoiQuery] = useState('');
   const [isLookingUp, setIsLookingUp] = useState(false);
   const { toast } = useToast();
+  const isStudent = currentProfile?.accountType === 'student';
 
   // Fill the form from Crossref (new publications only).
   const handleDoiFill = async () => {
@@ -233,11 +238,11 @@ const PublicationForm = ({ initialData, onSubmit, onCancel, isSubmitting = false
               <SelectValue placeholder="Select type" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="journal">Journal Article</SelectItem>
-              <SelectItem value="conference">Conference Paper</SelectItem>
-              <SelectItem value="book">Book</SelectItem>
-              <SelectItem value="chapter">Book Chapter</SelectItem>
-              <SelectItem value="other">Other</SelectItem>
+              {typeOptions(isStudent).map(type => (
+                <SelectItem key={type} value={type}>
+                  {PUBLICATION_TYPES[type].label}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -278,6 +283,20 @@ const PublicationForm = ({ initialData, onSubmit, onCancel, isSubmitting = false
             value={publication.conference || ''}
             onChange={handleChange}
           />
+        </div>
+      )}
+
+      {(publication.type === 'book' || publication.type === 'chapter') && (
+        <div className="space-y-2">
+          <Label htmlFor="book">{PUBLICATION_TYPES[publication.type].venueLabel}</Label>
+          <Input id="book" name="book" value={publication.book || ''} onChange={handleChange} />
+        </div>
+      )}
+
+      {GENERIC_VENUE_TYPES.includes(publication.type) && (
+        <div className="space-y-2">
+          <Label htmlFor="venue">{PUBLICATION_TYPES[publication.type].venueLabel}</Label>
+          <Input id="venue" name="venue" value={publication.venue || ''} onChange={handleChange} />
         </div>
       )}
 

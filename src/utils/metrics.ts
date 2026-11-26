@@ -49,3 +49,32 @@ export function researchMetrics(publications: Publication[]): ResearchMetrics {
     mostCited: mostCited && (mostCited.citations ?? 0) > 0 ? mostCited : null,
   };
 }
+
+/** Publications and citations for every year from the first to the latest (gaps filled with 0). */
+export function yearSeries(publications: Publication[]) {
+  if (publications.length === 0) return [];
+  const years = publications.map(p => p.year);
+  const first = Math.min(...years);
+  const last = Math.max(...years);
+  const byYear = new Map(citationsByPublicationYear(publications).map(e => [e.year, e]));
+  const series: { year: number; publications: number; citations: number }[] = [];
+  for (let year = first; year <= last; year++) {
+    const entry = byYear.get(year);
+    series.push({ year, publications: entry?.publications ?? 0, citations: entry?.citations ?? 0 });
+  }
+  return series;
+}
+
+/** Counts how often each value appears, most common first. */
+export function rank(values: string[], limit = 6) {
+  const counts = new Map<string, { name: string; count: number }>();
+  for (const raw of values) {
+    const name = raw.trim();
+    if (!name) continue;
+    const key = name.toLowerCase();
+    const entry = counts.get(key) ?? { name, count: 0 };
+    entry.count++;
+    counts.set(key, entry);
+  }
+  return [...counts.values()].sort((a, b) => b.count - a.count || a.name.localeCompare(b.name)).slice(0, limit);
+}

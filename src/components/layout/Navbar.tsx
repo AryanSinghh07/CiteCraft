@@ -10,18 +10,24 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import ThemeToggle from '@/components/common/ThemeToggle';
+import Logo from '@/components/common/Logo';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import {
   BarChart3,
   Book,
+  BookMarked,
   ExternalLink,
   LayoutDashboard,
   LifeBuoy,
   LogOut,
   Menu,
   Printer,
+  Quote,
+  School,
+  Shield,
   ShieldCheck,
+  Sparkles,
   User,
   X,
 } from 'lucide-react';
@@ -72,11 +78,15 @@ const Navbar = () => {
   const links: NavEntry[] = user
     ? [
         { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-        { to: '/summary', label: 'Summary', icon: BarChart3 },
+        profile?.accountType === 'student'
+          ? { to: '/college', label: 'College', icon: School }
+          : { to: '/summary', label: 'Insights', icon: BarChart3 },
+        { to: '/reading-list', label: 'Reading list', icon: BookMarked },
+        { to: '/summarize', label: 'Summarize', icon: Sparkles },
         { to: '/support', label: 'Support', icon: LifeBuoy },
         ...(isAdmin ? [{ to: '/admin/tickets', label: 'Admin', icon: ShieldCheck }] : []),
       ]
-    : [];
+    : [{ to: '/cite', label: 'Cite', icon: Quote }];
 
   const publicUrl = profile?.isPublic && profile.publicSlug ? `/u/${profile.publicSlug}` : null;
 
@@ -98,9 +108,7 @@ const Navbar = () => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between gap-4">
           <Link to={user ? '/dashboard' : '/'} className="group flex items-center gap-2 text-xl font-semibold">
-            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm transition-transform duration-300 group-hover:rotate-[-8deg] group-hover:scale-105">
-              <Book className="h-5 w-5" />
-            </span>
+            <Logo size={36} className="transition-transform duration-300 group-hover:rotate-[-8deg] group-hover:scale-105" />
             <span>CiteCraft</span>
           </Link>
 
@@ -160,8 +168,18 @@ const Navbar = () => {
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuItem asChild>
+                    <Link to="/security">
+                      <Shield className="mr-2 h-4 w-4" /> Security
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
                     <Link to="/cv">
                       <Printer className="mr-2 h-4 w-4" /> Printable CV
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/cite">
+                      <Quote className="mr-2 h-4 w-4" /> Citation generator
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
@@ -224,7 +242,7 @@ const Navbar = () => {
                   <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                 </div>
               </div>
-              {[...links, { to: '/profile', label: 'Profile', icon: User }, { to: '/cv', label: 'Printable CV', icon: Printer }].map(
+              {[...links, { to: '/profile', label: 'Profile', icon: User }, { to: '/security', label: 'Security', icon: Shield }, { to: '/cv', label: 'Printable CV', icon: Printer }, { to: '/cite', label: 'Citation generator', icon: Quote }].map(
                 (link, i) => (
                   <NavLink
                     key={link.to}

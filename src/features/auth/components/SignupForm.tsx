@@ -1,16 +1,25 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowRight, Loader2, MailCheck } from 'lucide-react';
+import { ArrowRight, Briefcase, GraduationCap, Loader2, MailCheck } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import type { AccountType } from '@/types';
+import { MIN_PASSWORD_LENGTH, passwordStrength } from '@/features/security/passwordStrength';
+import PasswordStrengthMeter from '@/features/security/PasswordStrengthMeter';
+import { securityService } from '@/services';
 import { useAuth } from '../hooks/useAuth';
 
-export const MIN_PASSWORD_LENGTH = 8;
+export { MIN_PASSWORD_LENGTH } from '@/features/security/passwordStrength';
 
 const SignupForm = () => {
+  const [searchParams] = useSearchParams();
+  const [accountType, setAccountType] = useState<AccountType>(
+    searchParams.get('type') === 'student' ? 'student' : 'researcher',
+  );
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -23,8 +32,9 @@ const SignupForm = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password.length < MIN_PASSWORD_LENGTH) {
-      toast({ title: 'Password too short', description: `Use at least ${MIN_PASSWORD_LENGTH} characters.`, variant: 'destructive' });
+    const strength = passwordStrength(password, [email, name]);
+    if (!strength.acceptable) {
+      toast({ title: 'Choose a stronger password', description: strength.tips[0] ?? `Use at least ${MIN_PASSWORD_LENGTH} characters.`, variant: 'destructive' });
       return;
     }
     if (password !== confirm) {
@@ -34,8 +44,9 @@ const SignupForm = () => {
 
     setIsLoading(true);
     try {
-      const { signedIn } = await signUp({ name, email, password });
+      const { signedIn } = await signUp({ name, email, password, accountType });
       if (signedIn) {
+        void securityService.recordPasswordStrength(passwordStrength(password, [email, name]).score).catch(() => undefined);
         toast({ title: 'Account created', description: 'Welcome to CiteCraft! Complete your profile to get started.' });
         navigate('/profile', { replace: true });
       } else {
@@ -79,6 +90,35 @@ const SignupForm = () => {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
+          <fieldset className="space-y-2">
+            <legend className="text-sm font-medium mb-2">I am a…</legend>
+            <div className="grid grid-cols-2 gap-3" role="radiogroup">
+              {(
+                [
+                  { value: 'student', label: 'Student', hint: 'UG, PG or PhD', icon: GraduationCap },
+                  { value: 'researcher', label: 'Researcher', hint: 'Faculty or staff', icon: Briefcase },
+                ] as const
+              ).map(option => (
+                <button
+                  key={option.value}
+                  type="button"
+                  role="radio"
+                  aria-checked={accountType === option.value}
+                  onClick={() => setAccountType(option.value)}
+                  className={cn(
+                    'flex flex-col items-center gap-1 rounded-xl border-2 p-3 text-center transition-all',
+                    accountType === option.value
+                      ? 'border-primary bg-primary/5 shadow-sm'
+                      : 'border-border hover:border-primary/40',
+                  )}
+                >
+                  <option.icon className={cn('h-6 w-6', accountType === option.value ? 'text-primary' : 'text-muted-foreground')} />
+                  <span className="text-sm font-medium">{option.label}</span>
+                  <span className="text-[11px] text-muted-foreground">{option.hint}</span>
+                </button>
+              ))}
+            </div>
+          </fieldset>
           <div className="space-y-2">
             <Label htmlFor="name">Full name</Label>
             <Input id="name" value={name} onChange={e => setName(e.target.value)} autoComplete="name" required />
@@ -88,7 +128,7 @@ const SignupForm = () => {
             <Input
               id="email"
               type="email"
-              placeholder="you@university.edu"
+              placeholder={accountType === 'student' ? 'you@student.university.edu' : 'you@university.edu'}
               value={email}
               onChange={e => setEmail(e.target.value)}
               autoComplete="email"
@@ -120,7 +160,11 @@ const SignupForm = () => {
               />
             </div>
           </div>
-          <p className="text-xs text-muted-foreground">At least {MIN_PASSWORD_LENGTH} characters.</p>
+          {password ? (
+            <PasswordStrengthMeter password={password} context={[email, name]} />
+          ) : (
+            <p className="text-xs text-muted-foreground">At least {MIN_PASSWORD_LENGTH} characters — longer is stronger.</p>
+          )}
 
           <Button type="submit" className="w-full button-hover" disabled={isLoading}>
             {isLoading ? (
@@ -137,7 +181,14 @@ const SignupForm = () => {
           </Button>
         </form>
       </CardContent>
-      <CardFooter className="flex justify-center">
+      <CardFooter className="flex flex-col items-center gap-2">
+        <p className="text-xs text-muted-foreground text-center">
+          By creating an account you agree to our{' '}
+          <Link to="/privacy" className="text-primary hover:underline">
+            privacy policy
+          </Link>
+          .
+        </p>
         <p className="text-sm text-muted-foreground">
           Already have an account?{' '}
           <Link to="/login" className="text-primary hover:underline">

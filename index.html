@@ -3,34 +3,31 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>CiteCraft — Manage and showcase your publications</title>
+    <title>CiteCraft — Your academic workspace</title>
     <meta
       name="description"
-      content="CiteCraft helps faculty and researchers manage publications, import from DOI or BibTeX, track h-index and citations, export CVs and share a public research profile."
+      content="CiteCraft helps students and researchers manage their work, plan college life, cite sources, track citations and share a professional profile."
     />
     <meta name="author" content="Aryan Singh, Kartik Mitra" />
     <meta name="theme-color" content="#f8fafc" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#020817" media="(prefers-color-scheme: dark)" />
-    <link rel="icon" href="/favicon.ico" />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
 
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="CiteCraft — Manage and showcase your publications" />
+    <meta property="og:title" content="CiteCraft — Your academic workspace" />
     <meta
       property="og:description"
-      content="Import publications by DOI or BibTeX, track your h-index, export CVs and share a public research profile."
+      content="Plan classes and deadlines, track attendance and CGPA, cite sources and showcase your work — free for students and researchers."
     />
     <meta property="og:url" content="https://citecraft.netlify.app/" />
     <meta name="twitter:card" content="summary" />
 
     <!-- Apply the saved theme before first paint to avoid a light/dark flash. -->
-    <script>
-      try {
-        var t = localStorage.getItem('citecraft-theme');
-        if (t === 'dark' || ((!t || t === 'system') && matchMedia('(prefers-color-scheme: dark)').matches)) {
-          document.documentElement.classList.add('dark');
-        }
-      } catch (e) {}
-    </script>
+    <script src="/theme-init.js"></script>
   </head>
 
   <body>

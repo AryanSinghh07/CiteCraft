@@ -1,5 +1,6 @@
 import type { Publication, PublicationInput, PublicationType } from '@/types';
 import { parseName } from './citations';
+import { GENERIC_VENUE_TYPES, PUBLICATION_TYPES } from './publicationTypes';
 
 /** Import from and export to BibTeX (.bib), the format used by Google Scholar, Zotero, Mendeley, etc. */
 
@@ -17,6 +18,13 @@ const TYPE_MAP: Record<string, PublicationType> = {
   book: 'book',
   incollection: 'chapter',
   inbook: 'chapter',
+  phdthesis: 'thesis',
+  mastersthesis: 'thesis',
+  thesis: 'thesis',
+  techreport: 'report',
+  report: 'report',
+  unpublished: 'preprint',
+  online: 'preprint',
 };
 
 const LATEX_ACCENTS: Record<string, string> = {
@@ -170,7 +178,14 @@ export function parseBibtex(text: string): BibtexParseResult {
       continue;
     }
 
-    const pubType = TYPE_MAP[type] ?? 'other';
+    let pubType = TYPE_MAP[type] ?? 'other';
+    // @misc with an arXiv / eprint field is a preprint
+    if (pubType === 'other' && (fields.eprint || /arxiv/i.test(fields.archiveprefix ?? fields.howpublished ?? fields.journal ?? ''))) {
+      pubType = 'preprint';
+    }
+    const genericVenue = cleanLatex(
+      fields.school ?? fields.institution ?? fields.organization ?? fields.howpublished ?? fields.archiveprefix ?? fields.publisher ?? fields.journal ?? '',
+    );
     const booktitle = cleanLatex(fields.booktitle ?? '');
     const keywords = cleanLatex(fields.keywords ?? '');
 
@@ -186,6 +201,7 @@ export function parseBibtex(text: string): BibtexParseResult {
       doi: fields.doi ? normalizeDoi(cleanLatex(fields.doi)) : undefined,
       url: fields.url ? fields.url.trim() : undefined,
       abstract: fields.abstract ? cleanLatex(fields.abstract) : undefined,
+      venue: GENERIC_VENUE_TYPES.includes(pubType) ? genericVenue || undefined : undefined,
       tags: keywords ? keywords.split(/[,;]/).map(k => k.trim()).filter(Boolean) : [],
       citations: 0,
     });
@@ -195,13 +211,6 @@ export function parseBibtex(text: string): BibtexParseResult {
 
 // ------------------------------------------------------------------ export
 
-const REVERSE_TYPE: Record<PublicationType, string> = {
-  journal: 'article',
-  conference: 'inproceedings',
-  book: 'book',
-  chapter: 'incollection',
-  other: 'misc',
-};
 
 const escapeValue = (value: string) => value.replace(/([&%$#_])/g, '\\$1');
 
@@ -223,6 +232,10 @@ export function toBibtex(publications: Publication[]): string {
         ['author', p.authors.length ? escapeValue(p.authors.join(' and ')) : undefined],
         ['journal', p.type === 'journal' ? p.journal : undefined],
         ['booktitle', p.type === 'conference' ? p.conference : p.type === 'chapter' ? p.book : undefined],
+        ['school', p.type === 'thesis' ? p.venue : undefined],
+        ['institution', p.type === 'report' ? p.venue : undefined],
+        ['howpublished', ['preprint', 'project', 'poster', 'other'].includes(p.type) ? p.venue : undefined],
+        ['publisher', p.type === 'book' ? p.book : undefined],
         ['year', String(p.year)],
         ['doi', p.doi],
         ['url', p.url],
@@ -233,7 +246,7 @@ export function toBibtex(publications: Publication[]): string {
         .filter((f): f is [string, string] => Boolean(f[1]))
         .map(([name, value]) => `  ${name} = {${name === 'title' || name === 'doi' || name === 'url' ? value : escapeValue(value)}}`)
         .join(',\n');
-      return `@${REVERSE_TYPE[p.type]}{${citationKey(p, used)},\n${body}\n}`;
+      return `@${PUBLICATION_TYPES[p.type].bibtex}{${citationKey(p, used)},\n${body}\n}`;
     })
     .join('\n\n');
 }

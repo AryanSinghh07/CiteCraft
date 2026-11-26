@@ -1,8 +1,8 @@
 import { useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   AlertDialog,
@@ -14,14 +14,17 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { FileUp, Loader2, FileText, Download, Trash2, ExternalLink, Sparkles } from 'lucide-react';
+import { FileUp, Loader2, FileText, Trash2, Eye, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { env } from '@/config/env';
 import { MAX_DOCUMENT_BYTES } from '@/services';
 import type { DocumentRecord } from '@/types';
+import { ACCEPTED_EXTENSIONS } from '@/features/summarizer/utils/readDocument';
 import { useDocuments } from '../hooks/useDocuments';
+import { DocumentViewer, type ViewerSource } from './DocumentViewer';
+import { KIND_LABEL, viewerKind } from '../utils/viewerKind';
 
-const ACCEPT = '.txt,.pdf,.docx,.pptx';
+// Any file can be stored; these are the types the viewer and summarizer understand.
+const ACCEPT = `${ACCEPTED_EXTENSIONS},.svg,.mp4,.webm,.mov,.mp3,.wav,.m4a,.ogg`;
 
 const formatSize = (bytes: number) =>
   bytes < 1024 * 1024 ? `${(bytes / 1024).toFixed(1)} KB` : `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
@@ -30,12 +33,12 @@ const errorMessage = (error: unknown) => (error instanceof Error ? error.message
 
 export const DocumentUpload = () => {
   const [file, setFile] = useState<File | null>(null);
-  const [summary, setSummary] = useState<string | null>(null);
-  const [isSummarizing, setIsSummarizing] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<DocumentRecord | null>(null);
+  const [viewing, setViewing] = useState<ViewerSource | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
-  const { documents, isLoading, upload, remove, open } = useDocuments();
+  const { documents, isLoading, upload, remove, load } = useDocuments();
+  const navigate = useNavigate();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0] ?? null;
@@ -45,7 +48,6 @@ export const DocumentUpload = () => {
       return;
     }
     setFile(selected);
-    setSummary(null);
   };
 
   const resetSelection = () => {
@@ -64,45 +66,8 @@ export const DocumentUpload = () => {
     }
   };
 
-  // Optional: send the file to the summarization service configured in VITE_SUMMARY_API_URL.
-  const handleSummarize = async () => {
-    if (!file || !env.summaryApiUrl) return;
-    setIsSummarizing(true);
-    const formData = new FormData();
-    formData.append('document', file);
-    try {
-      const response = await fetch(`${env.summaryApiUrl.replace(/\/$/, '')}/upload`, {
-        method: 'POST',
-        body: formData,
-      });
-      if (!response.ok) throw new Error('The summary service could not process this document.');
-      const data = await response.json();
-      setSummary(data.summary);
-      toast({ title: 'Summary ready', description: 'Your document summary has been generated.' });
-    } catch (error) {
-      toast({ title: 'Summarization failed', description: errorMessage(error), variant: 'destructive' });
-    } finally {
-      setIsSummarizing(false);
-    }
-  };
-
-  const handleDownloadSummary = () => {
-    if (!summary) return;
-    const url = URL.createObjectURL(new Blob([summary], { type: 'text/plain' }));
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${file?.name.replace(/\.[^.]+$/, '') ?? 'document'}-summary.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const handleOpen = async (doc: DocumentRecord) => {
-    try {
-      await open(doc);
-    } catch (error) {
-      toast({ title: 'Could not open file', description: errorMessage(error), variant: 'destructive' });
-    }
-  };
+  const handleView = (doc: DocumentRecord) =>
+    setViewing({ name: doc.name, mimeType: doc.mimeType, size: doc.size, load: () => load(doc) });
 
   const confirmDelete = async () => {
     if (!pendingDelete) return;
@@ -124,7 +89,7 @@ export const DocumentUpload = () => {
             <FileText className="h-5 w-5 text-primary" />
             Upload a Document
           </CardTitle>
-          <CardDescription>Store papers, preprints and slides securely alongside your publications.</CardDescription>
+          <CardDescription>Store papers, preprints and slides securely — and summarize any of them with AI.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid w-full max-w-sm items-center gap-1.5">
@@ -139,7 +104,7 @@ export const DocumentUpload = () => {
               onChange={handleFileChange}
               className="cursor-pointer"
             />
-            <p className="text-xs text-muted-foreground">TXT, PDF, DOCX or PPTX · up to 10 MB</p>
+            <p className="text-xs text-muted-foreground">PDF, Word, PowerPoint, Excel, images, text, code, audio, video and more · up to 10 MB</p>
           </div>
 
           {file && (
@@ -151,35 +116,21 @@ export const DocumentUpload = () => {
             </div>
           )}
 
-          {summary && (
-            <div className="mt-4 animate-fade-in">
-              <h3 className="text-lg font-medium mb-2">Document Summary</h3>
-              <Textarea value={summary} readOnly className="h-[200px] overflow-auto" />
-            </div>
-          )}
         </CardContent>
         <CardFooter className="flex flex-col sm:flex-row gap-2">
           <Button onClick={handleSave} disabled={!file || upload.isPending} className="w-full sm:flex-1">
             {upload.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileUp className="mr-2 h-4 w-4" />}
             {upload.isPending ? 'Saving…' : 'Save to library'}
           </Button>
-          {env.summaryApiUrl && (
-            <Button
-              onClick={handleSummarize}
-              variant="secondary"
-              disabled={!file || isSummarizing}
-              className="w-full sm:flex-1"
-            >
-              {isSummarizing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-              {isSummarizing ? 'Summarizing…' : 'Generate summary'}
-            </Button>
-          )}
-          {summary && (
-            <Button onClick={handleDownloadSummary} variant="outline" className="w-full sm:flex-1">
-              <Download className="mr-2 h-4 w-4" />
-              Download summary
-            </Button>
-          )}
+          <Button
+            variant="secondary"
+            className="w-full sm:flex-1"
+            disabled={!file}
+            onClick={() => file && navigate('/summarize', { state: { file } })}
+          >
+            <Sparkles className="mr-2 h-4 w-4" />
+            Summarize with AI
+          </Button>
         </CardFooter>
       </Card>
 
@@ -203,14 +154,28 @@ export const DocumentUpload = () => {
               {documents.map(doc => (
                 <li key={doc.id} className="flex items-center gap-3 py-3 animate-fade-in">
                   <FileText className="h-5 w-5 text-primary shrink-0" />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium truncate">{doc.name}</p>
+                  <button
+                    type="button"
+                    className="min-w-0 flex-1 rounded text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    onClick={() => handleView(doc)}
+                    title={`View ${doc.name}`}
+                  >
+                    <p className="text-sm font-medium truncate hover:text-primary hover:underline">{doc.name}</p>
                     <p className="text-xs text-muted-foreground">
-                      {formatSize(doc.size)} · {new Date(doc.createdAt).toLocaleDateString()}
+                      {KIND_LABEL[viewerKind(doc.name, doc.mimeType)]} · {formatSize(doc.size)} · {new Date(doc.createdAt).toLocaleDateString()}
                     </p>
-                  </div>
-                  <Button variant="ghost" size="icon" onClick={() => handleOpen(doc)} aria-label={`Open ${doc.name}`}>
-                    <ExternalLink className="h-4 w-4" />
+                  </button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => navigate('/summarize', { state: { document: doc } })}
+                    aria-label={`Summarize ${doc.name}`}
+                    title="Summarize with AI"
+                  >
+                    <Sparkles className="h-4 w-4 text-primary" />
+                  </Button>
+                  <Button variant="ghost" size="icon" onClick={() => handleView(doc)} aria-label={`View ${doc.name}`} title="View">
+                    <Eye className="h-4 w-4" />
                   </Button>
                   <Button
                     variant="ghost"
@@ -227,6 +192,15 @@ export const DocumentUpload = () => {
           )}
         </CardContent>
       </Card>
+
+      <DocumentViewer
+        source={viewing}
+        onClose={() => setViewing(null)}
+        onSummarize={picked => {
+          setViewing(null);
+          navigate('/summarize', { state: { file: picked } });
+        }}
+      />
 
       <AlertDialog open={Boolean(pendingDelete)} onOpenChange={isOpen => !isOpen && setPendingDelete(null)}>
         <AlertDialogContent>

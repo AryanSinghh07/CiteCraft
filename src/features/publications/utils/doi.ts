@@ -1,5 +1,6 @@
 import type { PublicationInput, PublicationType } from '@/types';
 import { cleanLatex } from './bibtex';
+import { GENERIC_VENUE_TYPES } from './publicationTypes';
 
 /** Looks up publication details for a DOI using the free Crossref API. */
 
@@ -18,6 +19,10 @@ const TYPE_MAP: Record<string, PublicationType> = {
   'book-chapter': 'chapter',
   'book-section': 'chapter',
   'book-part': 'chapter',
+  dissertation: 'thesis',
+  report: 'report',
+  'report-component': 'report',
+  'posted-content': 'preprint',
 };
 
 interface CrossrefWork {
@@ -32,6 +37,8 @@ interface CrossrefWork {
   URL?: string;
   subject?: string[];
   DOI?: string;
+  institution?: { name?: string }[];
+  publisher?: string;
 }
 
 /** Removes the JATS XML tags Crossref puts in abstracts. */
@@ -71,6 +78,9 @@ export async function lookupDoi(input: string, signal?: AbortSignal): Promise<Pu
     journal: type === 'journal' ? container || undefined : undefined,
     conference: type === 'conference' ? container || undefined : undefined,
     book: type === 'chapter' || type === 'book' ? container || undefined : undefined,
+    venue: GENERIC_VENUE_TYPES.includes(type)
+      ? container || work.institution?.[0]?.name || work.publisher || undefined
+      : undefined,
     doi: work.DOI ?? doi,
     url: work.URL,
     abstract: work.abstract ? stripTags(work.abstract) : undefined,

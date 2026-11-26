@@ -7,3 +7,31 @@
   from = "/*"
   to = "/index.html"
   status = 200
+
+# Security headers for every page.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    # Only our own scripts may run (no inline or third-party JavaScript).
+    # Data comes from Supabase and Crossref; fonts from Google Fonts.
+    Content-Security-Policy = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://*.supabase.co; connect-src 'self' blob: https://*.supabase.co wss://*.supabase.co https://api.crossref.org; frame-src 'none'; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:; media-src 'self' blob:; upgrade-insecure-requests"
+    # Don't allow other sites to embed CiteCraft (clickjacking).
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()"
+    Cross-Origin-Opener-Policy = "same-origin"
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains"
+
+# Built files have content hashes in their names, so they can be cached forever.
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# PDF.js worker (used by the in-browser quick summarizer) is an .mjs module;
+# make sure it's served as JavaScript so the nosniff header doesn't block it.
+[[headers]]
+  for = "/assets/*.mjs"
+  [headers.values]
+    Content-Type = "text/javascript; charset=utf-8"
