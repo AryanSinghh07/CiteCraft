@@ -1,14 +1,17 @@
 
-import { Publication, User } from './types';
+import type { Profile, Publication } from '@/types';
 
-export const sampleUser: User = {
+/** Seed data for the demo account (demo mode only). */
+
+export const sampleProfile: Profile = {
   id: '1',
   name: 'Aryan Singh',
-  email: 'aryan.singh@university.edu',
+  email: 'aryan@example.com',
   affiliation: 'University of Science & Technology',
   position: 'Associate Professor',
   department: 'Computer Science',
-  photoUrl: 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png'
+  bio: 'Researcher working on applied machine learning, NLP and AI for education.',
+  researchInterests: ['Machine Learning', 'NLP', 'AI in Education'],
 };
 
 export const samplePublications: Publication[] = [
@@ -39,7 +42,7 @@ export const samplePublications: Publication[] = [
   {
     id: '3',
     title: 'Advances in Natural Language Processing for Scientific Literature Analysis',
-    authors: ['Jane Smith', 'Michael Brown', 'Sophia Wang'],
+    authors: ['Aryan Singh', 'Michael Brown', 'Sophia Wang'],
     journal: 'Computational Linguistics Journal',
     year: 2023,
     doi: '10.9101/clj.2023.03.005',
@@ -51,7 +54,7 @@ export const samplePublications: Publication[] = [
   {
     id: '4',
     title: 'Ethical Considerations in AI-Driven Educational Systems',
-    authors: ['Jane Smith', 'Elena Rodriguez'],
+    authors: ['Aryan Singh', 'Elena Rodriguez'],
     book: 'Handbook of Artificial Intelligence in Education',
     year: 2021,
     doi: '10.1112/aie.2021.04.007',
@@ -63,7 +66,7 @@ export const samplePublications: Publication[] = [
   {
     id: '5',
     title: 'Quantum Computing: Implications for Cryptography and Data Security',
-    authors: ['Jane Smith', 'Alex Chen', 'William Taylor'],
+    authors: ['Aryan Singh', 'Alex Chen', 'William Taylor'],
     journal: 'Journal of Quantum Information Science',
     year: 2022,
     doi: '10.3141/jqis.2022.05.012',
@@ -75,7 +78,7 @@ export const samplePublications: Publication[] = [
   {
     id: '6',
     title: 'Blockchain Technology for Academic Credential Verification',
-    authors: ['Jane Smith', 'Thomas Wilson'],
+    authors: ['Aryan Singh', 'Thomas Wilson'],
     conference: 'IEEE Blockchain Conference',
     year: 2021,
     doi: '10.7272/ieee-bc.2021.06.009',
@@ -87,7 +90,7 @@ export const samplePublications: Publication[] = [
   {
     id: '7',
     title: 'The Future of Higher Education: A Computational Perspective',
-    authors: ['Jane Smith'],
+    authors: ['Aryan Singh'],
     book: 'Computational Approaches to Educational Innovation',
     year: 2020,
     abstract: 'This book explores how computational methods are reshaping higher education systems globally.',
@@ -96,50 +99,3 @@ export const samplePublications: Publication[] = [
     tags: ['education', 'innovation', 'technology']
   }
 ];
-
-export const generatePublicationSummary = (publications: Publication[]) => {
-  const summary = {
-    totalPublications: publications.length,
-    journalArticles: publications.filter(p => p.type === 'journal').length,
-    conferenceProceedings: publications.filter(p => p.type === 'conference').length,
-    books: publications.filter(p => p.type === 'book').length,
-    bookChapters: publications.filter(p => p.type === 'chapter').length,
-    other: publications.filter(p => p.type === 'other').length,
-    citationCount: publications.reduce((sum, pub) => sum + (pub.citations || 0), 0),
-    publicationsByYear: {} as Record<string, number>,
-    topJournals: {} as Record<string, number>,
-    topConferences: {} as Record<string, number>,
-    coAuthors: {} as Record<string, number>,
-  };
-
-  // Count publications by year
-  publications.forEach(pub => {
-    const year = pub.year.toString();
-    summary.publicationsByYear[year] = (summary.publicationsByYear[year] || 0) + 1;
-  });
-
-  // Count journals
-  publications.forEach(pub => {
-    if (pub.journal) {
-      summary.topJournals[pub.journal] = (summary.topJournals[pub.journal] || 0) + 1;
-    }
-  });
-
-  // Count conferences
-  publications.forEach(pub => {
-    if (pub.conference) {
-      summary.topConferences[pub.conference] = (summary.topConferences[pub.conference] || 0) + 1;
-    }
-  });
-
-  // Count co-authors
-  publications.forEach(pub => {
-    pub.authors.forEach(author => {
-      if (author !== 'Jane Smith') { // Exclude the main author
-        summary.coAuthors[author] = (summary.coAuthors[author] || 0) + 1;
-      }
-    });
-  });
-
-  return summary;
-};
