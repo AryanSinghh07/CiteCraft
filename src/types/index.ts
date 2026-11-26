@@ -19,6 +19,15 @@ export interface Profile {
   googleScholar?: string;
   website?: string;
   role?: UserRole;
+  /** show a shareable page at /u/<publicSlug> */
+  isPublic?: boolean;
+  publicSlug?: string;
+}
+
+/** What visitors see on a public profile page (no email or role). */
+export interface PublicProfileData {
+  profile: Omit<Profile, 'id' | 'email' | 'role' | 'isPublic'>;
+  publications: Publication[];
 }
 
 /** @deprecated use Profile */
