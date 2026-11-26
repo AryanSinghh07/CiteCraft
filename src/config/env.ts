@@ -11,7 +11,6 @@ const supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY ??
 export const env = {
   supabaseUrl: supabaseUrl?.trim() || '',
   supabaseAnonKey: supabaseAnonKey?.trim() || '',
-  summaryApiUrl: (import.meta.env.VITE_SUMMARY_API_URL as string | undefined)?.trim() || '',
 };
 
 export const isSupabaseConfigured = Boolean(env.supabaseUrl && env.supabaseAnonKey);
