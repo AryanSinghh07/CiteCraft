@@ -16,6 +16,7 @@ export const {
   documents: documentService,
   tickets: ticketService,
   ai: aiService,
+  readingList: readingListService,
 } = backend;
 
 export { backendMode };
