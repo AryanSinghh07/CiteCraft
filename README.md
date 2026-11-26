@@ -52,6 +52,7 @@ A sophisticated web-based tool designed for faculty members and researchers to *
 - [x] **Phase 2** — DOI lookup & bulk import (DOI / BibTeX), h-index & i10-index, export (CSV, BibTeX, APA / MLA / IEEE, printable PDF CV), shareable public profile at `/u/your-name`
 - [x] **Phase 3** — Redesigned landing page, light / dark / system theme, page transitions, animated counters, new navigation with account menu, pages loaded on demand (37% less JavaScript on first visit)
 - [x] **Phase 4** — AI summaries of any document (PDF, Word, PowerPoint, Excel, images…), redesigned dashboard and research insights
+- [x] **Phase 6** — College tools for students (timetable, assignments & exams, attendance with the 75% rule, SGPA/CGPA calculator, focus timer, student dashboard), account security (security level, two-factor authentication enforced in the database, password strength checks, sign out other devices, data download, strict security headers), new app icons
 - [x] **Phase 5** — Student accounts (projects, theses, reports, preprints, posters), reading list with notes, free citation generator (APA, MLA, IEEE, Harvard, Chicago), scripted in-app assistant that answers questions and guides you through adding work and raising tickets
 
 ---
