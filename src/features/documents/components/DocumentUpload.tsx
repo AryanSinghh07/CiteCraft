@@ -1,8 +1,8 @@
 import { useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   AlertDialog,
@@ -14,9 +14,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { FileUp, Loader2, FileText, Download, Trash2, ExternalLink, Sparkles } from 'lucide-react';
+import { FileUp, Loader2, FileText, Trash2, ExternalLink, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { env } from '@/config/env';
 import { MAX_DOCUMENT_BYTES } from '@/services';
 import type { DocumentRecord } from '@/types';
 import { useDocuments } from '../hooks/useDocuments';
@@ -30,12 +29,11 @@ const errorMessage = (error: unknown) => (error instanceof Error ? error.message
 
 export const DocumentUpload = () => {
   const [file, setFile] = useState<File | null>(null);
-  const [summary, setSummary] = useState<string | null>(null);
-  const [isSummarizing, setIsSummarizing] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<DocumentRecord | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const { documents, isLoading, upload, remove, open } = useDocuments();
+  const navigate = useNavigate();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0] ?? null;
@@ -45,7 +43,6 @@ export const DocumentUpload = () => {
       return;
     }
     setFile(selected);
-    setSummary(null);
   };
 
   const resetSelection = () => {
@@ -62,38 +59,6 @@ export const DocumentUpload = () => {
     } catch (error) {
       toast({ title: 'Upload failed', description: errorMessage(error), variant: 'destructive' });
     }
-  };
-
-  // Optional: send the file to the summarization service configured in VITE_SUMMARY_API_URL.
-  const handleSummarize = async () => {
-    if (!file || !env.summaryApiUrl) return;
-    setIsSummarizing(true);
-    const formData = new FormData();
-    formData.append('document', file);
-    try {
-      const response = await fetch(`${env.summaryApiUrl.replace(/\/$/, '')}/upload`, {
-        method: 'POST',
-        body: formData,
-      });
-      if (!response.ok) throw new Error('The summary service could not process this document.');
-      const data = await response.json();
-      setSummary(data.summary);
-      toast({ title: 'Summary ready', description: 'Your document summary has been generated.' });
-    } catch (error) {
-      toast({ title: 'Summarization failed', description: errorMessage(error), variant: 'destructive' });
-    } finally {
-      setIsSummarizing(false);
-    }
-  };
-
-  const handleDownloadSummary = () => {
-    if (!summary) return;
-    const url = URL.createObjectURL(new Blob([summary], { type: 'text/plain' }));
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${file?.name.replace(/\.[^.]+$/, '') ?? 'document'}-summary.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
   };
 
   const handleOpen = async (doc: DocumentRecord) => {
@@ -124,7 +89,7 @@ export const DocumentUpload = () => {
             <FileText className="h-5 w-5 text-primary" />
             Upload a Document
           </CardTitle>
-          <CardDescription>Store papers, preprints and slides securely alongside your publications.</CardDescription>
+          <CardDescription>Store papers, preprints and slides securely — and summarize any of them with AI.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid w-full max-w-sm items-center gap-1.5">
@@ -151,35 +116,21 @@ export const DocumentUpload = () => {
             </div>
           )}
 
-          {summary && (
-            <div className="mt-4 animate-fade-in">
-              <h3 className="text-lg font-medium mb-2">Document Summary</h3>
-              <Textarea value={summary} readOnly className="h-[200px] overflow-auto" />
-            </div>
-          )}
         </CardContent>
         <CardFooter className="flex flex-col sm:flex-row gap-2">
           <Button onClick={handleSave} disabled={!file || upload.isPending} className="w-full sm:flex-1">
             {upload.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileUp className="mr-2 h-4 w-4" />}
             {upload.isPending ? 'Saving…' : 'Save to library'}
           </Button>
-          {env.summaryApiUrl && (
-            <Button
-              onClick={handleSummarize}
-              variant="secondary"
-              disabled={!file || isSummarizing}
-              className="w-full sm:flex-1"
-            >
-              {isSummarizing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-              {isSummarizing ? 'Summarizing…' : 'Generate summary'}
-            </Button>
-          )}
-          {summary && (
-            <Button onClick={handleDownloadSummary} variant="outline" className="w-full sm:flex-1">
-              <Download className="mr-2 h-4 w-4" />
-              Download summary
-            </Button>
-          )}
+          <Button
+            variant="secondary"
+            className="w-full sm:flex-1"
+            disabled={!file}
+            onClick={() => file && navigate('/summarize', { state: { file } })}
+          >
+            <Sparkles className="mr-2 h-4 w-4" />
+            Summarize with AI
+          </Button>
         </CardFooter>
       </Card>
 
@@ -209,6 +160,15 @@ export const DocumentUpload = () => {
                       {formatSize(doc.size)} · {new Date(doc.createdAt).toLocaleDateString()}
                     </p>
                   </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => navigate('/summarize', { state: { document: doc } })}
+                    aria-label={`Summarize ${doc.name}`}
+                    title="Summarize with AI"
+                  >
+                    <Sparkles className="h-4 w-4 text-primary" />
+                  </Button>
                   <Button variant="ghost" size="icon" onClick={() => handleOpen(doc)} aria-label={`Open ${doc.name}`}>
                     <ExternalLink className="h-4 w-4" />
                   </Button>
