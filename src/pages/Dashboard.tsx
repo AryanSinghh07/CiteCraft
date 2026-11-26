@@ -15,6 +15,7 @@ import DocumentUpload from '@/features/documents/components/DocumentUpload';
 import ImportDialog from '@/features/publications/components/ImportDialog';
 import ExportMenu from '@/features/publications/components/ExportMenu';
 import { hIndex, i10Index } from '@/utils/metrics';
+import AnimatedNumber from '@/components/common/AnimatedNumber';
 import { usePublications } from '@/features/publications/hooks/usePublications';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import type { Publication, PublicationInput } from '@/types';
@@ -71,7 +72,7 @@ const Dashboard = () => {
 
   const stats = [
     { label: 'Total Publications', value: publications.length },
-    { label: 'Total Citations', value: publications.reduce((sum, p) => sum + (p.citations || 0), 0).toLocaleString() },
+    { label: 'Total Citations', value: publications.reduce((sum, p) => sum + (p.citations || 0), 0) },
     { label: 'h-index', value: hIndex(publications) },
     { label: 'i10-index', value: i10Index(publications) },
   ];
@@ -113,14 +114,16 @@ const Dashboard = () => {
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-8">
-            {stats.map(stat => (
-              <Card key={stat.label} className="glass-card">
+            {stats.map((stat, i) => (
+              <Card key={stat.label} className="glass-card hover-lift animate-fade-up" style={{ animationDelay: `${i * 70}ms` }}>
                 <CardHeader className="pb-2">
                   <CardDescription>{stat.label}</CardDescription>
                   {isLoading ? (
                     <Skeleton className="h-9 w-16" />
                   ) : (
-                    <CardTitle className="text-3xl">{stat.value}</CardTitle>
+                    <CardTitle className="text-3xl">
+                      <AnimatedNumber value={stat.value} />
+                    </CardTitle>
                   )}
                 </CardHeader>
               </Card>
