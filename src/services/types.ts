@@ -52,6 +52,8 @@ export interface AuthService {
   signOut(): Promise<void>;
   sendPasswordReset(email: string): Promise<void>;
   updatePassword(newPassword: string): Promise<void>;
+  /** Permanently deletes the signed-in account, its files and all its data. */
+  deleteAccount(): Promise<void>;
   /** Returns an unsubscribe function. */
   onAuthChange(callback: (user: AuthUser | null) => void): () => void;
 }
@@ -181,6 +183,8 @@ export interface AiService {
   /** Streams the summary text through onText; resolves with the saved summary id. */
   summarize(request: SummarizeRequest, onText: (chunk: string) => void, signal?: AbortSignal): Promise<{ id: string | null; truncated: boolean }>;
   listSummaries(userId: string): Promise<SummaryRecord[]>;
+  /** Saves a summary made in the browser (quick summary) to the history. */
+  saveSummary(userId: string, record: Omit<SummaryRecord, 'id' | 'createdAt'>): Promise<SummaryRecord>;
   deleteSummary(userId: string, id: string): Promise<void>;
 }
 
