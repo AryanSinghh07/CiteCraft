@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { Book, User, Home, LogOut, Menu, X, BarChart3 } from "lucide-react";
+import { Book, User, Home, LogOut, Menu, X, BarChart3, LifeBuoy, ShieldCheck } from "lucide-react";
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 
@@ -11,7 +11,7 @@ const Navbar = () => {
   const isMobile = useIsMobile();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { user, signOut } = useAuth();
+  const { user, isAdmin, signOut } = useAuth();
   const navigate = useNavigate();
   const isLoggedIn = Boolean(user);
 
@@ -31,11 +31,14 @@ const Navbar = () => {
     navigate('/', { replace: true });
   };
 
+  const isActivePath = (to: string) =>
+    to === '/' ? location.pathname === '/' : location.pathname === to || location.pathname.startsWith(`${to}/`);
+
   const NavItem = ({ to, label, icon: Icon }: { to: string; label: string; icon: React.ElementType }) => (
     <Link 
       to={to} 
-      className={`flex items-center gap-2 px-4 py-2 rounded-md transition-all duration-300 ${
-        location.pathname === to 
+      className={`flex items-center gap-2 px-3 py-2 rounded-md transition-all duration-300 ${
+        isActivePath(to)
           ? 'bg-primary/10 text-primary font-medium' 
           : 'hover:bg-primary/5 text-foreground/80 hover:text-primary'
       }`}
@@ -83,7 +86,11 @@ const Navbar = () => {
                         <>
                           <NavItem to="/dashboard" label="Dashboard" icon={Book} />
                           <NavItem to="/summary" label="Summary" icon={BarChart3} />
-                          <NavItem to="/profile" label="Profile" icon={User} />
+                          <NavItem to="/support" label="Support" icon={LifeBuoy} />
+                          {isAdmin && <NavItem to="/admin/tickets" label="Admin" icon={ShieldCheck} />}
+                          <NavItem to="/support" label="Support" icon={LifeBuoy} />
+                  {isAdmin && <NavItem to="/admin/tickets" label="Admin" icon={ShieldCheck} />}
+                  <NavItem to="/profile" label="Profile" icon={User} />
                           <Button 
                             variant="ghost" 
                             className="flex items-center gap-2 w-full justify-start px-4 text-destructive hover:bg-destructive/10 hover:text-destructive"
@@ -102,12 +109,14 @@ const Navbar = () => {
               )}
             </div>
           ) : (
-            <nav className="flex items-center gap-4">
+            <nav className="flex items-center gap-1 lg:gap-2">
               <NavItem to="/" label="Home" icon={Home} />
               {isLoggedIn ? (
                 <>
                   <NavItem to="/dashboard" label="Dashboard" icon={Book} />
                   <NavItem to="/summary" label="Summary" icon={BarChart3} />
+                  <NavItem to="/support" label="Support" icon={LifeBuoy} />
+                  {isAdmin && <NavItem to="/admin/tickets" label="Admin" icon={ShieldCheck} />}
                   <NavItem to="/profile" label="Profile" icon={User} />
                   <Button 
                     variant="ghost" 
