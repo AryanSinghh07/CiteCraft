@@ -33,6 +33,7 @@ Open http://localhost:8080 and sign in with one of the demo accounts, or create 
    - `supabase/migrations/0006_students.sql` — student accounts, new work types (thesis, project…) and the reading list
    - `supabase/migrations/0007_student_tools.sql` — courses & attendance, timetable, assignments/exams and grades (CGPA)
    - `supabase/migrations/0008_security.sql` — enforces two-factor authentication in the database for users who turn it on
+   - `supabase/migrations/0009_account_deletion.sql` — lets users delete their own account (Security → Delete account)
 
    The files are safe to run again. If the Supabase GitHub integration is enabled with
    `supabase` as the directory, they are also applied automatically when merged.
@@ -86,12 +87,23 @@ service, add its domain to `connect-src` in the policy or the browser will block
 1. Netlify → **Site configuration → Environment variables**: add `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`.
 2. Trigger a redeploy. Without these variables the site still works in demo mode.
 
+## Privacy policy contact
+
+Set `VITE_CONTACT_EMAIL` (in `.env.local` and in Netlify) to the address shown on `/privacy` for
+account-recovery and data requests. Without it, the page points people to Help & Support only.
+
 ## External services
 
 - **Crossref** (`api.crossref.org`) — DOI lookups for “Fill in from a DOI” and bulk DOI import.
   Free, no key needed. Only the DOI is sent.
 
-## 4. AI document summarizer
+## 4. Document summarizer
+
+The **Quick summary** works out of the box: it runs in the browser (PDF.js for PDFs, JSZip for
+Office files) and needs no server or key. The **AI summary** below is optional; until it is
+deployed, the app automatically falls back to the quick summary.
+
+### AI summary (optional)
 
 The summarizer runs as a **Supabase Edge Function** (`supabase/functions/summarize`) and
 calls Claude with your Anthropic API key. (The chat assistant is scripted and runs in the
